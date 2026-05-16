@@ -9,12 +9,21 @@ public class GetStaffListQueryHandler
     : IRequestHandler<GetStaffListQuery, Result<PaginatedList<StaffListItemDto>>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetStaffListQueryHandler(IFamsDbContext db) => _db = db;
+    public GetStaffListQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PaginatedList<StaffListItemDto>>> Handle(
         GetStaffListQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PaginatedList<StaffListItemDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.StaffMembers.AsNoTracking()
             .Where(s => s.CampusId == request.CampusId);
 

@@ -38,7 +38,7 @@ export default function ParentAttendancePage() {
               <div className="w-full bg-gray-100 rounded-full h-3">
                 <div className={`${cls} h-3 rounded-full`} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
               </div>
-              <p className="text-right text-sm mt-1 font-medium">{pct.toFixed(1)}%</p>
+              <p className="text-right text-sm mt-1 font-medium">{(pct ?? 0).toFixed(1)}%</p>
             </div>
           )
         })}

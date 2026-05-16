@@ -19,6 +19,7 @@ public class FamsDbContext : IdentityDbContext<ApplicationUser>, IFamsDbContext
         _currentUser = currentUser;
     }
 
+    public DbSet<School> Schools => Set<School>();
     public DbSet<Campus> Campuses => Set<Campus>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Parent> Parents => Set<Parent>();
@@ -73,7 +74,25 @@ public class FamsDbContext : IdentityDbContext<ApplicationUser>, IFamsDbContext
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(FamsDbContext).Assembly);
 
+        builder.Entity<School>(e =>
+        {
+            e.HasKey(s => s.Id);
+            e.Property(s => s.Name).IsRequired().HasMaxLength(200);
+            e.Property(s => s.Code).IsRequired().HasMaxLength(20);
+            e.HasIndex(s => s.Code).IsUnique();
+            e.HasMany(s => s.Campuses)
+             .WithOne(c => c.School)
+             .HasForeignKey(c => c.SchoolId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
         ApplySoftDeleteFilter(builder);
+
+        // Campus filter overwrites the soft-delete-only filter from the loop above,
+        // adding school-level scoping on top. SuperAdmin (SchoolId == null) sees all campuses.
+        builder.Entity<Campus>().HasQueryFilter(c =>
+            !c.IsDeleted &&
+            (_currentUser.SchoolId == null || c.SchoolId == _currentUser.SchoolId));
     }
 
     private static void ApplySoftDeleteFilter(ModelBuilder builder)

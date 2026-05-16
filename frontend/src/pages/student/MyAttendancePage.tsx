@@ -58,7 +58,7 @@ export default function MyAttendancePage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard
           label="Attendance %"
-          value={summary.data ? `${summary.data.attendancePercentage.toFixed(1)}%` : '—'}
+          value={summary.data ? `${(summary.data.attendancePercentage ?? 0).toFixed(1)}%` : '—'}
           trend="up"
           icon="📅"
         />

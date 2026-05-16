@@ -41,7 +41,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
         var refreshExpiryDays = int.Parse(_config["Jwt:RefreshTokenExpiryDays"] ?? "7");
         var fullName = $"{user.FirstName} {user.LastName}";
 
-        var newAccessToken = _jwt.GenerateAccessToken(user.Id, user.Email, fullName, user.CampusId, user.Roles);
+        var newAccessToken = _jwt.GenerateAccessToken(user.Id, user.Email, fullName, user.CampusId, user.SchoolId, user.Roles);
         var newRefreshToken = _jwt.GenerateRefreshToken();
         var newRefreshExpiry = DateTime.UtcNow.AddDays(refreshExpiryDays);
 
@@ -49,7 +49,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
 
         var dto = new LoginDto(newAccessToken, newRefreshToken,
             DateTime.UtcNow.AddMinutes(accessExpiry),
-            user.Id, user.Roles, user.CampusId, fullName, MfaRequired: false);
+            user.Id, user.Roles, user.CampusId, user.SchoolId, fullName, MfaRequired: false);
 
         return Result<LoginDto>.Success(dto);
     }

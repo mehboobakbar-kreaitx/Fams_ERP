@@ -8,11 +8,20 @@ namespace FAMS.Application.Modules.Finance.Fee.Queries.GetInvoices;
 public class GetInvoicesQueryHandler : IRequestHandler<GetInvoicesQuery, Result<PaginatedList<InvoiceDto>>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetInvoicesQueryHandler(IFamsDbContext db) => _db = db;
+    public GetInvoicesQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PaginatedList<InvoiceDto>>> Handle(GetInvoicesQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PaginatedList<InvoiceDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.FeeInvoices.AsNoTracking().Include(i => i.Student)
             .Where(i => i.CampusId == request.CampusId);
 

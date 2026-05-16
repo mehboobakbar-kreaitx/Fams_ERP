@@ -8,10 +8,20 @@ namespace FAMS.Application.Modules.Procurement.Vendors.Queries.GetVendors;
 public class GetVendorsQueryHandler : IRequestHandler<GetVendorsQuery, Result<List<VendorDto>>>
 {
     private readonly IFamsDbContext _db;
-    public GetVendorsQueryHandler(IFamsDbContext db) => _db = db;
+    private readonly ICurrentUserService _currentUser;
+
+    public GetVendorsQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<List<VendorDto>>> Handle(GetVendorsQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<List<VendorDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.Vendors.AsNoTracking().Where(v => v.CampusId == request.CampusId);
         if (!string.IsNullOrWhiteSpace(request.Category)) query = query.Where(v => v.Category == request.Category);
         if (request.IsApproved.HasValue) query = query.Where(v => v.IsApproved == request.IsApproved.Value);

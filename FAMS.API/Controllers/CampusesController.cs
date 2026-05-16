@@ -31,7 +31,7 @@ public class CampusesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "SystemAdmin")]
+    [Authorize(Roles = "SystemAdmin,Principal")]
     public async Task<IActionResult> Create([FromBody] CreateCampusCommand command)
     {
         var result = await _mediator.Send(command);

@@ -9,12 +9,21 @@ public class GetRequisitionsQueryHandler
     : IRequestHandler<GetRequisitionsQuery, Result<PaginatedList<RequisitionDto>>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetRequisitionsQueryHandler(IFamsDbContext db) => _db = db;
+    public GetRequisitionsQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PaginatedList<RequisitionDto>>> Handle(
         GetRequisitionsQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PaginatedList<RequisitionDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.PurchaseRequisitions.AsNoTracking()
             .Where(p => p.CampusId == request.CampusId);
 

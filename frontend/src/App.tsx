@@ -14,6 +14,9 @@ const TeacherLayout    = lazy(() => import('./components/layout/TeacherLayout'))
 const StudentLayout    = lazy(() => import('./components/layout/StudentLayout'))
 const ParentLayout     = lazy(() => import('./components/layout/ParentLayout'))
 
+// Campus setup (first-time School Admin flow — no layout wrapper)
+const CampusSetupPage = lazy(() => import('./pages/campus/CampusSetupPage'))
+
 // Campus portal pages (existing)
 const Dashboard          = lazy(() => import('./pages/Dashboard'))
 const StudentsPage       = lazy(() => import('./pages/StudentsPage'))
@@ -26,6 +29,7 @@ const HrmPage            = lazy(() => import('./pages/HrmPage'))
 
 // Super Admin portal pages
 const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'))
+const SchoolsPage         = lazy(() => import('./pages/superadmin/SchoolsPage'))
 const CampusesPage        = lazy(() => import('./pages/superadmin/CampusesPage'))
 const SystemConfigPage    = lazy(() => import('./pages/superadmin/SystemConfigPage'))
 const StaffPage           = lazy(() => import('./pages/superadmin/StaffPage'))
@@ -73,6 +77,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/apply" element={<PublicApplyPage />} />
+          <Route path="/campus/setup" element={<CampusSetupPage />} />
           <Route
             path="/unauthorized"
             element={
@@ -90,6 +95,7 @@ export default function App() {
           >
             <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="/super-admin/dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/super-admin/schools"   element={<SchoolsPage />} />
             <Route path="/super-admin/campuses"  element={<CampusesPage />} />
             <Route path="/super-admin/students"  element={<StudentsPage />} />
             <Route path="/super-admin/staff"     element={<StaffPage />} />

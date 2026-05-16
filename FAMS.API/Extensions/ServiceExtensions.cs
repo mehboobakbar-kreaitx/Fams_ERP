@@ -158,6 +158,14 @@ public class CurrentUserService : ICurrentUserService
             return Guid.TryParse(campusIdClaim, out var id) ? id : null;
         }
     }
+    public Guid? SchoolId
+    {
+        get
+        {
+            var claim = User?.FindFirst("school_id")?.Value;
+            return Guid.TryParse(claim, out var sid) ? sid : null;
+        }
+    }
     public IEnumerable<string> Roles => User?.FindAll(ClaimTypes.Role).Select(c => c.Value) ?? [];
     public string? Role => Roles.FirstOrDefault();
     public bool IsAuthenticated => User?.Identity?.IsAuthenticated ?? false;

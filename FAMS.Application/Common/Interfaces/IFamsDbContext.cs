@@ -6,6 +6,7 @@ namespace FAMS.Application.Common.Interfaces;
 
 public interface IFamsDbContext
 {
+    DbSet<School> Schools { get; }
     DbSet<Campus> Campuses { get; }
     DbSet<Student> Students { get; }
     DbSet<Parent> Parents { get; }

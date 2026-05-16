@@ -14,7 +14,9 @@ public class Campus : BaseAuditableEntity
     public bool IsActive { get; private set; } = true;
     public bool IsMainCampus { get; private set; }
     public int MaxCapacity { get; private set; }
+    public Guid SchoolId { get; private set; }
 
+    public School School { get; private set; } = null!;
     public ICollection<Student> Students { get; private set; } = new List<Student>();
     public ICollection<Staff> StaffMembers { get; private set; } = new List<Staff>();
 
@@ -48,6 +50,7 @@ public class Campus : BaseAuditableEntity
         MaxCapacity = maxCapacity;
     }
 
+    public void AssignSchool(Guid schoolId) => SchoolId = schoolId;
     public void MarkAsMainCampus() => IsMainCampus = true;
     public void Deactivate() => IsActive = false;
 }

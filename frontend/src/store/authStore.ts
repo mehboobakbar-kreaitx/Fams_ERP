@@ -4,6 +4,7 @@ type AuthUser = {
   firstName: string
   lastName: string
   campusId: string
+  schoolId: string | null
   roles: string[]
 }
 

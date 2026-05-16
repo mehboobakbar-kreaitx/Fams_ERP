@@ -6,6 +6,7 @@ public class ApplicationUser : IdentityUser
 {
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+    public Guid? SchoolId { get; set; }
     public Guid CampusId { get; set; }
     public string? ProfilePhoto { get; set; }
     public DateTime? LastLoginAt { get; set; }

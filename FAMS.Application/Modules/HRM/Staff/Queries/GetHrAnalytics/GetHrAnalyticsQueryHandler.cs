@@ -8,11 +8,20 @@ namespace FAMS.Application.Modules.HRM.Staff.Queries.GetHrAnalytics;
 public class GetHrAnalyticsQueryHandler : IRequestHandler<GetHrAnalyticsQuery, Result<HrAnalyticsDto>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetHrAnalyticsQueryHandler(IFamsDbContext db) => _db = db;
+    public GetHrAnalyticsQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<HrAnalyticsDto>> Handle(GetHrAnalyticsQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<HrAnalyticsDto>.Failure("Campus not found or not accessible.");
+
         var staff = await _db.StaffMembers.AsNoTracking()
             .Where(s => s.CampusId == request.CampusId)
             .Select(s => new { s.Department, s.EmploymentType, s.IsActive, s.BasicSalary })

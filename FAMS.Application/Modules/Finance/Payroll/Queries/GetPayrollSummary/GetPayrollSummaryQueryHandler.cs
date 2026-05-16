@@ -10,12 +10,21 @@ public class GetPayrollSummaryQueryHandler
     : IRequestHandler<GetPayrollSummaryQuery, Result<PayrollSummaryDto>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetPayrollSummaryQueryHandler(IFamsDbContext db) => _db = db;
+    public GetPayrollSummaryQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PayrollSummaryDto>> Handle(
         GetPayrollSummaryQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PayrollSummaryDto>.Failure("Campus not found or not accessible.");
+
         var rows = await _db.Payrolls.AsNoTracking()
             .Where(p => p.CampusId == request.CampusId && p.Year == request.Year && p.Month == request.Month)
             .Join(_db.StaffMembers, p => p.StaffId, s => s.Id,

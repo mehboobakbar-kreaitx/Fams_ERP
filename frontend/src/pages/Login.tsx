@@ -4,6 +4,13 @@ import { axiosClient } from '../api/axiosClient'
 import { authStore } from '../store/authStore'
 import { landingPath, resolvePortal } from '../components/auth/rolePortal'
 
+const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
+
+// Campus-portal roles that require a campus to be assigned before the dashboard is usable.
+const CAMPUS_SETUP_ROLES = new Set([
+  'Principal', 'AcademicCoordinator', 'Accountant', 'HrOfficer', 'ProcurementOfficer',
+])
+
 type LoginResponse = {
   accessToken: string
   refreshToken: string
@@ -11,6 +18,7 @@ type LoginResponse = {
   userId: string
   roles: string[]
   campusId: string
+  schoolId: string | null
   fullName: string
   mfaRequired: boolean
 }
@@ -28,25 +36,38 @@ export default function Login() {
     setLoading(true)
     try {
       const { data } = await axiosClient.post<LoginResponse>('/auth/login', { email, password })
+
       if (data.mfaRequired) {
         setError('MFA is required for this account. MFA flow not yet implemented.')
         return
       }
+
       const [firstName, ...rest] = (data.fullName ?? '').split(' ')
       authStore.setState({
         user: {
-          id: data.userId,
+          id:       data.userId,
           email,
           firstName: firstName ?? '',
-          lastName: rest.join(' '),
-          campusId: data.campusId,
-          roles: data.roles ?? [],
+          lastName:  rest.join(' '),
+          campusId:  data.campusId,
+          schoolId:  data.schoolId ?? null,
+          roles:     data.roles ?? [],
         },
-        token: data.accessToken,
+        token:        data.accessToken,
         refreshToken: data.refreshToken,
       })
-      const portal = resolvePortal(data.roles)
-      navigate(landingPath(portal))
+
+      // School admin with no campus yet → first-time setup flow
+      const needsSetup =
+        data.roles.some((r) => CAMPUS_SETUP_ROLES.has(r)) &&
+        (!data.campusId || data.campusId === EMPTY_GUID)
+
+      if (needsSetup) {
+        navigate('/campus/setup')
+        return
+      }
+
+      navigate(landingPath(resolvePortal(data.roles)))
     } catch {
       setError('Invalid email or password.')
     } finally {
@@ -72,7 +93,7 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="admin@fams.local"
+              placeholder="superadmin@fams.io"
             />
           </div>
 

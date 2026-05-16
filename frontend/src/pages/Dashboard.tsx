@@ -76,14 +76,14 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard
           label="Total Students"
-          value={totalStudents.toLocaleString()}
+          value={(totalStudents ?? 0).toLocaleString()}
           hint={`${totalStaff} staff • ${(data.activeClasses ?? 0)} classes`}
           icon="👥"
         />
         <KpiCard
           label="Attendance Today"
-          value={`${attendancePct.toFixed(1)}%`}
-          trend={attendancePct >= 80 ? 'up' : attendancePct >= 60 ? 'neutral' : 'down'}
+          value={`${(attendancePct ?? 0).toFixed(1)}%`}
+          trend={(attendancePct ?? 0) >= 80 ? 'up' : (attendancePct ?? 0) >= 60 ? 'neutral' : 'down'}
           icon="✅"
         />
         <KpiCard
@@ -92,7 +92,7 @@ export default function Dashboard() {
           trend={outstanding === 0 ? 'up' : 'down'}
           icon="💰"
         />
-        <KpiCard label="Open Applications" value={openApps.toLocaleString()} icon="📋" />
+        <KpiCard label="Open Applications" value={(openApps ?? 0).toLocaleString()} icon="📋" />
       </div>
 
       {recent.length > 0 && (

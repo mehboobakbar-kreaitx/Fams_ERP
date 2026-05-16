@@ -13,6 +13,7 @@ const theme: PortalTheme = {
 
 const navItems: PortalNavItem[] = [
   { to: '/super-admin/dashboard', label: 'Dashboard',  icon: '🏠' },
+  { to: '/super-admin/schools',   label: 'Schools',    icon: '🏛️' },
   { to: '/super-admin/campuses',  label: 'Campuses',   icon: '🏫' },
   { to: '/super-admin/students',  label: 'Students',   icon: '👥' },
   { to: '/super-admin/staff',     label: 'Staff',      icon: '👤' },

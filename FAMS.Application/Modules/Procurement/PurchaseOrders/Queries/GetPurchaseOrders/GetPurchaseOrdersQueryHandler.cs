@@ -8,11 +8,20 @@ namespace FAMS.Application.Modules.Procurement.PurchaseOrders.Queries.GetPurchas
 public class GetPurchaseOrdersQueryHandler : IRequestHandler<GetPurchaseOrdersQuery, Result<PaginatedList<PurchaseOrderDto>>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetPurchaseOrdersQueryHandler(IFamsDbContext db) => _db = db;
+    public GetPurchaseOrdersQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PaginatedList<PurchaseOrderDto>>> Handle(GetPurchaseOrdersQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PaginatedList<PurchaseOrderDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.PurchaseOrders.AsNoTracking().Include(p => p.Vendor).Include(p => p.LineItems)
             .Where(p => p.CampusId == request.CampusId);
         if (!string.IsNullOrWhiteSpace(request.Status)) query = query.Where(p => p.Status == request.Status);

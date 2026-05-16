@@ -9,11 +9,20 @@ namespace FAMS.Application.Modules.Admissions.Queries.GetAdmissionsFunnel;
 public class GetAdmissionsFunnelQueryHandler : IRequestHandler<GetAdmissionsFunnelQuery, Result<AdmissionsFunnelDto>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetAdmissionsFunnelQueryHandler(IFamsDbContext db) => _db = db;
+    public GetAdmissionsFunnelQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<AdmissionsFunnelDto>> Handle(GetAdmissionsFunnelQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<AdmissionsFunnelDto>.Failure("Campus not found or not accessible.");
+
         var query = _db.Applications.Where(a => a.CampusId == request.CampusId);
         if (request.ProgramId.HasValue) query = query.Where(a => a.ProgramId == request.ProgramId.Value);
 

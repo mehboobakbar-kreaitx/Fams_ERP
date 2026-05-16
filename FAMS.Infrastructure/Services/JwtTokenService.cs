@@ -14,7 +14,7 @@ public class JwtTokenService : IJwtTokenService
 
     public JwtTokenService(IConfiguration config) => _config = config;
 
-    public string GenerateAccessToken(string userId, string email, string fullName, Guid campusId, IEnumerable<string> roles)
+    public string GenerateAccessToken(string userId, string email, string fullName, Guid campusId, Guid? schoolId, IEnumerable<string> roles)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:SecretKey"]!));
         var claims = new List<Claim>
@@ -25,6 +25,8 @@ public class JwtTokenService : IJwtTokenService
             new(ClaimTypes.Name, fullName),
             new("campus_id", campusId.ToString())
         };
+        if (schoolId.HasValue)
+            claims.Add(new Claim("school_id", schoolId.Value.ToString()));
         claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
         var token = new JwtSecurityToken(

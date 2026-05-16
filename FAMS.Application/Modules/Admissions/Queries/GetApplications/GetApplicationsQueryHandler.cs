@@ -8,11 +8,20 @@ namespace FAMS.Application.Modules.Admissions.Queries.GetApplications;
 public class GetApplicationsQueryHandler : IRequestHandler<GetApplicationsQuery, Result<PaginatedList<ApplicationDto>>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetApplicationsQueryHandler(IFamsDbContext db) => _db = db;
+    public GetApplicationsQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PaginatedList<ApplicationDto>>> Handle(GetApplicationsQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PaginatedList<ApplicationDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.Applications.AsNoTracking().Where(a => a.CampusId == request.CampusId);
         if (request.Status.HasValue) query = query.Where(a => a.Status == request.Status.Value);
         if (request.ProgramId.HasValue) query = query.Where(a => a.ProgramId == request.ProgramId.Value);

@@ -32,7 +32,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
         if (mfaMandatory && !user.TwoFactorEnabled)
         {
             var enrollDto = new LoginDto(string.Empty, string.Empty, DateTime.MinValue,
-                user.Id, user.Roles, user.CampusId, $"{user.FirstName} {user.LastName}",
+                user.Id, user.Roles, user.CampusId, user.SchoolId, $"{user.FirstName} {user.LastName}",
                 MfaRequired: true, MfaEnrollmentRequired: true);
             return Result<LoginDto>.Success(enrollDto);
         }
@@ -42,7 +42,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
             if (string.IsNullOrWhiteSpace(request.TotpCode))
             {
                 var pendingDto = new LoginDto(string.Empty, string.Empty, DateTime.MinValue,
-                    user.Id, user.Roles, user.CampusId, $"{user.FirstName} {user.LastName}",
+                    user.Id, user.Roles, user.CampusId, user.SchoolId, $"{user.FirstName} {user.LastName}",
                     MfaRequired: true, MfaEnrollmentRequired: false);
                 return Result<LoginDto>.Success(pendingDto);
             }
@@ -55,7 +55,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
         var refreshExpiry = int.Parse(_config["Jwt:RefreshTokenExpiryDays"] ?? "7");
         var fullName = $"{user.FirstName} {user.LastName}";
 
-        var accessToken = _jwt.GenerateAccessToken(user.Id, user.Email, fullName, user.CampusId, user.Roles);
+        var accessToken = _jwt.GenerateAccessToken(user.Id, user.Email, fullName, user.CampusId, user.SchoolId, user.Roles);
         var refreshToken = _jwt.GenerateRefreshToken();
         var refreshExpiryAt = DateTime.UtcNow.AddDays(refreshExpiry);
 
@@ -69,6 +69,7 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
             user.Id,
             user.Roles,
             user.CampusId,
+            user.SchoolId,
             fullName,
             MfaRequired: false);
 

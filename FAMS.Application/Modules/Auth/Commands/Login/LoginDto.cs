@@ -7,6 +7,7 @@ public record LoginDto(
     string UserId,
     IReadOnlyList<string> Roles,
     Guid CampusId,
+    Guid? SchoolId,
     string FullName,
     bool MfaRequired,
     bool MfaEnrollmentRequired = false);

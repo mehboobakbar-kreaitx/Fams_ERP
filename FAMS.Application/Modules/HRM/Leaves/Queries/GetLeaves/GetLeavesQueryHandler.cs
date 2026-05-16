@@ -8,11 +8,20 @@ namespace FAMS.Application.Modules.HRM.Leaves.Queries.GetLeaves;
 public class GetLeavesQueryHandler : IRequestHandler<GetLeavesQuery, Result<PaginatedList<LeaveDto>>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetLeavesQueryHandler(IFamsDbContext db) => _db = db;
+    public GetLeavesQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PaginatedList<LeaveDto>>> Handle(GetLeavesQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PaginatedList<LeaveDto>>.Failure("Campus not found or not accessible.");
+
         var query = _db.Leaves.AsNoTracking().Include(l => l.Staff)
             .Where(l => l.CampusId == request.CampusId);
         if (request.StaffId.HasValue) query = query.Where(l => l.StaffId == request.StaffId.Value);

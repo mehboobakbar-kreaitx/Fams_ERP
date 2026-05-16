@@ -14,7 +14,7 @@ public class IdentityService : IIdentityService
     {
         var roles = await mgr.GetRolesAsync(user);
         return new AppUserDto(user.Id, user.Email ?? string.Empty, user.FirstName, user.LastName,
-            user.CampusId, user.TwoFactorEnabled, roles.ToList());
+            user.CampusId, user.SchoolId, user.TwoFactorEnabled, roles.ToList());
     }
 
     public async Task<AppUserDto?> FindByEmailAsync(string email)
@@ -113,5 +113,37 @@ public class IdentityService : IIdentityService
         return result.Succeeded
             ? (true, null)
             : (false, string.Join("; ", result.Errors.Select(e => e.Description)));
+    }
+
+    public async Task<(bool Succeeded, string? UserId, string? Error)> CreateUserAsync(
+        string email, string password, string firstName, string lastName,
+        Guid? schoolId, Guid campusId, string role)
+    {
+        var user = new ApplicationUser
+        {
+            UserName       = email,
+            Email          = email,
+            EmailConfirmed = true,
+            FirstName      = firstName,
+            LastName       = lastName,
+            SchoolId       = schoolId,
+            CampusId       = campusId,
+            IsActive       = true,
+        };
+
+        var result = await _userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+            return (false, null, string.Join("; ", result.Errors.Select(e => e.Description)));
+
+        await _userManager.AddToRoleAsync(user, role);
+        return (true, user.Id, null);
+    }
+
+    public async Task UpdateCampusIdAsync(string userId, Guid campusId)
+    {
+        var u = await _userManager.FindByIdAsync(userId);
+        if (u is null) return;
+        u.CampusId = campusId;
+        await _userManager.UpdateAsync(u);
     }
 }

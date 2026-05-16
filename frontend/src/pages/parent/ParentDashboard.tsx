@@ -77,7 +77,7 @@ export default function ParentDashboard() {
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
                 <p className="text-xs text-muted-foreground">Attendance (30d)</p>
-                <p className="text-lg font-semibold">{c.attendancePercentLast30Days.toFixed(1)}%</p>
+                <p className="text-lg font-semibold">{(c.attendancePercentLast30Days ?? 0).toFixed(1)}%</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Fee Balance</p>

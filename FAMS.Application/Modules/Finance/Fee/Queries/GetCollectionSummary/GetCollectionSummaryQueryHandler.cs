@@ -9,11 +9,20 @@ namespace FAMS.Application.Modules.Finance.Fee.Queries.GetCollectionSummary;
 public class GetCollectionSummaryQueryHandler : IRequestHandler<GetCollectionSummaryQuery, Result<CollectionSummaryDto>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetCollectionSummaryQueryHandler(IFamsDbContext db) => _db = db;
+    public GetCollectionSummaryQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<CollectionSummaryDto>> Handle(GetCollectionSummaryQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<CollectionSummaryDto>.Failure("Campus not found or not accessible.");
+
         var query = _db.FeeInvoices.AsNoTracking().Where(i => i.CampusId == request.CampusId);
         if (!string.IsNullOrWhiteSpace(request.TermName))
             query = query.Where(i => i.TermName == request.TermName);

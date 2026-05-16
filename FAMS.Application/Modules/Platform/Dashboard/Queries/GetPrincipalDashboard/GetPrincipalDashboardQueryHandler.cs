@@ -10,12 +10,21 @@ public class GetPrincipalDashboardQueryHandler
     : IRequestHandler<GetPrincipalDashboardQuery, Result<PrincipalDashboardDto>>
 {
     private readonly IFamsDbContext _db;
+    private readonly ICurrentUserService _currentUser;
 
-    public GetPrincipalDashboardQueryHandler(IFamsDbContext db) => _db = db;
+    public GetPrincipalDashboardQueryHandler(IFamsDbContext db, ICurrentUserService currentUser)
+    {
+        _db = db;
+        _currentUser = currentUser;
+    }
 
     public async Task<Result<PrincipalDashboardDto>> Handle(
         GetPrincipalDashboardQuery request, CancellationToken cancellationToken)
     {
+        if (_currentUser.SchoolId.HasValue &&
+            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
+            return Result<PrincipalDashboardDto>.Failure("Campus not found or not accessible.");
+
         var campusId = request.CampusId;
         var today = DateTime.UtcNow.Date;
 
