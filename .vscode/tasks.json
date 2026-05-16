@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build", "${workspaceFolder}/FAMS.slnx"],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "silent" },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "docker-up",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "docker-down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always", "panel": "shared" }
+    },
+    {
+      "label": "ef-migrate",
+      "type": "shell",
+      "command": "dotnet ef migrations add ${input:migrationName} --project FAMS.Infrastructure --startup-project FAMS.API",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "ef-update",
+      "type": "shell",
+      "command": "dotnet ef database update --project FAMS.Infrastructure --startup-project FAMS.API",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "run-tests",
+      "type": "shell",
+      "command": "dotnet test FAMS.slnx --no-build",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always" }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationName",
+      "type": "promptString",
+      "description": "Migration name (e.g. AddStudentTable)"
+    }
+  ]
+}

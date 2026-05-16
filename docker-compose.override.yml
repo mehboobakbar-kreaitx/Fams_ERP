@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  fams-api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Logging__LogLevel__Default=Debug
+      - Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command=Information
+    volumes:
+      - ./FAMS.API:/app/FAMS.API
+
+  fams-gateway:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

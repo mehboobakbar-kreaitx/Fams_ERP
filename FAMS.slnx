@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="FAMS.API/FAMS.API.csproj" />
+  <Project Path="FAMS.Application/FAMS.Application.csproj" />
+  <Project Path="FAMS.Domain/FAMS.Domain.csproj" />
+  <Project Path="FAMS.Infrastructure/FAMS.Infrastructure.csproj" />
+  <Project Path="FAMS.Gateway/FAMS.Gateway.csproj" />
+  <Project Path="tests/FAMS.UnitTests/FAMS.UnitTests.csproj" />
+  <Project Path="tests/FAMS.IntegrationTests/FAMS.IntegrationTests.csproj" />
+</Solution>
