@@ -4,6 +4,11 @@ import { axiosClient } from '../../api/axiosClient'
 import { authenticatedLandingPath } from '../../components/auth/rolePortal'
 import { authStore, type AuthSessionPayload, type PendingMfaState } from '../../store/authStore'
 
+function getApiError(err: unknown): string {
+  const e = err as { response?: { data?: { error?: string; title?: string } } }
+  return e?.response?.data?.error ?? e?.response?.data?.title ?? ''
+}
+
 type LoginResponse = AuthSessionPayload & {
   mfaRequired: boolean
   mfaEnrollmentRequired: boolean
@@ -41,12 +46,18 @@ export default function MfaVerifyPage() {
       const { data } = await axiosClient.post<LoginResponse>('/auth/validate-mfa-login', {
         mfaChallengeToken: pending.mfaChallengeToken,
         code,
-      })
+      }, { headers: { 'x-skip-error-toast': '1' } })
 
       authStore.setSessionFromLogin(data, pending.email)
       navigate(authenticatedLandingPath(data.roles, data.campusId), { replace: true })
-    } catch {
-      setError('Invalid MFA code.')
+    } catch (err) {
+      const apiErr = getApiError(err)
+      if (apiErr.includes('Invalid MFA challenge')) {
+        authStore.clearPendingMfa()
+        navigate('/login', { replace: true })
+        return
+      }
+      setError('Invalid code. Please try again.')
     } finally {
       setSubmitting(false)
     }

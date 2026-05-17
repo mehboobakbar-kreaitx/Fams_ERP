@@ -120,6 +120,16 @@ export const authStore = {
     localStorage.removeItem(PENDING_MFA_KEY)
   },
 
+  // Called when setup-mfa returns 400 "already enabled" — enrollment completed in a
+  // previous attempt but the page got stuck. Switch the pending state so that
+  // /mfa/verify doesn't redirect back to /mfa/setup.
+  transitionToMfaVerify() {
+    const pending = this.getPendingMfa()
+    if (!pending) return
+    const updated: PendingMfaState = { ...pending, mfaEnrollmentRequired: false }
+    localStorage.setItem(PENDING_MFA_KEY, JSON.stringify(updated))
+  },
+
   clear() {
     localStorage.removeItem(AUTH_KEY)
     localStorage.removeItem('access_token')

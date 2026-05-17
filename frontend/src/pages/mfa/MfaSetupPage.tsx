@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosClient } from '../../api/axiosClient'
 import { authenticatedLandingPath } from '../../components/auth/rolePortal'
 import { authStore, type AuthSessionPayload, type PendingMfaState } from '../../store/authStore'
+
+function getApiError(err: unknown): string {
+  const e = err as { response?: { data?: { error?: string; title?: string } } }
+  return e?.response?.data?.error ?? e?.response?.data?.title ?? ''
+}
 
 type MfaSetupResponse = {
   qrCodeDataUrl: string
@@ -24,8 +29,15 @@ export default function MfaSetupPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  // Guard against React StrictMode double-invocation and concurrent re-mounts.
+  // The ref persists across the strict-mode unmount/remount cycle so the
+  // single-use challenge token is only consumed once.
+  const setupInitiated = useRef(false)
 
   useEffect(() => {
+    if (setupInitiated.current) return
+    setupInitiated.current = true
+
     const current = authStore.getPendingMfa()
     if (!current) {
       navigate('/login', { replace: true })
@@ -33,12 +45,37 @@ export default function MfaSetupPage() {
     }
 
     setPending(current)
-    setLoading(true)
+
+    const controller = new AbortController()
     axiosClient
-      .post<MfaSetupResponse>('/auth/setup-mfa', { mfaChallengeToken: current.mfaChallengeToken })
+      .post<MfaSetupResponse>(
+        '/auth/setup-mfa',
+        { mfaChallengeToken: current.mfaChallengeToken },
+        { signal: controller.signal, headers: { 'x-skip-error-toast': '1' } },
+      )
       .then(({ data }) => setSetup(data))
-      .catch(() => setError('MFA setup could not be started.'))
-      .finally(() => setLoading(false))
+      .catch((err) => {
+        if (controller.signal.aborted) return
+        const apiErr = getApiError(err)
+        if (apiErr.includes('already enabled')) {
+          // Enrollment completed in a prior attempt but session got stuck.
+          // Switch to the verify flow so the user can complete login.
+          authStore.transitionToMfaVerify()
+          navigate('/mfa/verify', { replace: true })
+          return
+        }
+        if (apiErr.includes('Invalid MFA challenge')) {
+          authStore.clearPendingMfa()
+          navigate('/login', { replace: true })
+          return
+        }
+        setError('MFA setup could not be started. Please log in again.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+
+    return () => controller.abort()
   }, [navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,14 +85,24 @@ export default function MfaSetupPage() {
     setError('')
     setSubmitting(true)
     try {
+      // validate-mfa-login handles enrollment atomically when TwoFactorEnabled=false:
+      // it calls EnableTwoFactorAsync internally so we never need a separate verify-mfa
+      // round-trip. This eliminates the stuck state where verify-mfa succeeds but
+      // validate-mfa-login then fails, leaving the account half-enrolled.
       const payload = { mfaChallengeToken: pending.mfaChallengeToken, code }
-      await axiosClient.post('/auth/verify-mfa', payload)
-      const { data } = await axiosClient.post<LoginResponse>('/auth/validate-mfa-login', payload)
-
+      const { data } = await axiosClient.post<LoginResponse>('/auth/validate-mfa-login', payload, {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       authStore.setSessionFromLogin(data, pending.email)
       navigate(authenticatedLandingPath(data.roles, data.campusId), { replace: true })
-    } catch {
-      setError('Invalid MFA code.')
+    } catch (err) {
+      const apiErr = getApiError(err)
+      if (apiErr.includes('Invalid MFA challenge')) {
+        authStore.clearPendingMfa()
+        navigate('/login', { replace: true })
+        return
+      }
+      setError('Invalid code. Please try again.')
     } finally {
       setSubmitting(false)
     }
