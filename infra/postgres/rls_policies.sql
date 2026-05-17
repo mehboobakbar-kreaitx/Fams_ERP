@@ -94,3 +94,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON fee_invoices    TO fams_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON fee_payments    TO fams_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON "StaffMembers"  TO fams_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON applications    TO fams_user;
+
+-- ── AuditLogs — INSERT and SELECT only; UPDATE and DELETE are never permitted ──
+-- Belt: revoke at the privilege level so the app role cannot issue DML mutations.
+REVOKE UPDATE, DELETE ON "AuditLogs" FROM fams_user;
+GRANT  SELECT, INSERT  ON "AuditLogs" TO   fams_user;
+
+-- Suspenders: PostgreSQL rules fire INSTEAD of the statement so even a superuser
+-- using the fams_user session cannot mutate rows through the ORM.
+CREATE RULE no_update_audit AS ON UPDATE TO "AuditLogs" DO INSTEAD NOTHING;
+CREATE RULE no_delete_audit AS ON DELETE TO "AuditLogs" DO INSTEAD NOTHING;

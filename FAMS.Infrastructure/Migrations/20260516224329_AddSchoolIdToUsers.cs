@@ -52,9 +52,10 @@ namespace FAMS.Infrastructure.Migrations
                     table.PrimaryKey("PK_Schools", x => x.Id);
                 });
 
-            // Wipe all old sample/seed data that pre-dates the Schools entity.
-            // CASCADE handles staff, students, attendance, invoices, etc. that reference campuses.
-            migrationBuilder.Sql("TRUNCATE TABLE campuses CASCADE");
+            // Pre-existing campuses receive SchoolId = Guid.Empty (the column default above).
+            // After this migration runs, a SystemAdmin must assign each campus to the correct
+            // school via the super-admin UI. Do NOT truncate campuses here — that would
+            // cascade-delete students, staff, attendance, invoices, and all related data.
 
             migrationBuilder.CreateIndex(
                 name: "IX_campuses_SchoolId",
