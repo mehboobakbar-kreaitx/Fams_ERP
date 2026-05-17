@@ -46,7 +46,8 @@ public class SetupMfaCommandHandler : IRequestHandler<SetupMfaCommand, Result<Mf
     {
         var issuer = Uri.EscapeDataString("FAMS");
         var account = Uri.EscapeDataString(email);
-        var secret = Uri.EscapeDataString(key);
+        // secret must be raw Base32 per the otpauth spec — never URI-encode it
+        var secret = key.TrimEnd('=');
         return $"otpauth://totp/{issuer}:{account}?secret={secret}&issuer={issuer}&algorithm=SHA1&digits=6&period=30";
     }
 }

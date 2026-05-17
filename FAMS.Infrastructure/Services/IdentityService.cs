@@ -1,14 +1,21 @@
 using FAMS.Application.Common.Interfaces;
 using FAMS.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using OtpNet;
 
 namespace FAMS.Infrastructure.Services;
 
 public class IdentityService : IIdentityService
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<IdentityService> _logger;
 
-    public IdentityService(UserManager<ApplicationUser> userManager) => _userManager = userManager;
+    public IdentityService(UserManager<ApplicationUser> userManager, ILogger<IdentityService> logger)
+    {
+        _userManager = userManager;
+        _logger = logger;
+    }
 
     private static async Task<AppUserDto> ToDtoAsync(UserManager<ApplicationUser> mgr, ApplicationUser user)
     {
@@ -40,7 +47,13 @@ public class IdentityService : IIdentityService
     {
         var u = await _userManager.FindByIdAsync(userId);
         if (u is null) return false;
-        return await _userManager.VerifyTwoFactorTokenAsync(u, _userManager.Options.Tokens.AuthenticatorTokenProvider, NormalizeAuthenticatorCode(code));
+
+        var key = await _userManager.GetAuthenticatorKeyAsync(u);
+        _logger.LogInformation("MFA Login — UserId: {UserId}, StoredKey: {Key}", userId, key ?? "NULL");
+
+        if (string.IsNullOrWhiteSpace(key)) return false;
+
+        return VerifyTotpCode(key, NormalizeAuthenticatorCode(code), userId, "Login");
     }
 
     public async Task SetRefreshTokenAsync(string userId, string? refreshToken, DateTime? expiry)
@@ -99,9 +112,19 @@ public class IdentityService : IIdentityService
     {
         var u = await _userManager.FindByIdAsync(userId);
         if (u is null) return false;
-        var valid = await _userManager.VerifyTwoFactorTokenAsync(u, _userManager.Options.Tokens.AuthenticatorTokenProvider, NormalizeAuthenticatorCode(code));
-        if (!valid) return false;
+
+        var key = await _userManager.GetAuthenticatorKeyAsync(u);
+        _logger.LogInformation("MFA Enroll — UserId: {UserId}, StoredKey: {Key}", userId, key ?? "NULL");
+
+        if (string.IsNullOrWhiteSpace(key)) return false;
+
+        if (!VerifyTotpCode(key, NormalizeAuthenticatorCode(code), userId, "Enroll"))
+            return false;
+
         var result = await _userManager.SetTwoFactorEnabledAsync(u, true);
+        if (!result.Succeeded)
+            _logger.LogWarning("MFA Enroll — SetTwoFactorEnabled failed for UserId: {UserId}: {Errors}",
+                userId, string.Join("; ", result.Errors.Select(e => e.Description)));
         return result.Succeeded;
     }
 
@@ -154,8 +177,27 @@ public class IdentityService : IIdentityService
         await _userManager.UpdateAsync(u);
     }
 
-    private static string NormalizeAuthenticatorCode(string code)
+    // OtpNet-based TOTP verification: explicit UTC clock, explicit ±2-step window.
+    // Replaces the Identity black-box VerifyTwoFactorTokenAsync to gain observability
+    // and eliminate silent failures from key-decode errors inside Rfc6238AuthenticationService.
+    private bool VerifyTotpCode(string base32Key, string code, string userId, string context)
     {
-        return code.Replace(" ", string.Empty).Replace("-", string.Empty);
+        try
+        {
+            var keyBytes = Base32Encoding.ToBytes(base32Key);
+            var totp = new Totp(keyBytes);
+            var valid = totp.VerifyTotp(DateTime.UtcNow, code, out var matchedStep, new VerificationWindow(previous: 2, future: 2));
+            _logger.LogInformation("MFA {Context} — UserId: {UserId}, Valid: {Valid}, MatchedStep: {Step}",
+                context, userId, valid, valid ? matchedStep : (long?)null);
+            return valid;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "MFA {Context} — TOTP decode/verify threw for UserId: {UserId}", context, userId);
+            return false;
+        }
     }
+
+    private static string NormalizeAuthenticatorCode(string code)
+        => code.Replace(" ", string.Empty).Replace("-", string.Empty).Trim();
 }
