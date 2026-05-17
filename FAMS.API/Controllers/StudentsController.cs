@@ -87,9 +87,12 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:guid}/documents")]
-    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Teacher,Executive")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Teacher,Executive,Student")]
     public async Task<IActionResult> GetDocuments(Guid id)
     {
+        if (_currentUser.Roles.Contains("Student") && _currentUser.UserId != id.ToString())
+            return Forbid();
+
         var result = await _mediator.Send(new GetStudentDocumentsQuery(id));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
     }
@@ -193,9 +196,13 @@ public class StudentsController : ControllerBase
 
     [HttpPost("{id:guid}/documents")]
     [Consumes("multipart/form-data")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Teacher,Executive,Student")]
     public async Task<IActionResult> UploadDocument(
         Guid id, IFormFile file, [FromForm] string documentType)
     {
+        if (_currentUser.Roles.Contains("Student") && _currentUser.UserId != id.ToString())
+            return Forbid();
+
         if (file is null || file.Length == 0)
             return BadRequest(new { error = "No file provided." });
 

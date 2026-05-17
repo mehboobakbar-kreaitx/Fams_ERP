@@ -112,7 +112,7 @@ public class HRMController : ControllerBase
     }
 
     [HttpGet("leaves")]
-    [Authorize(Roles = "SystemAdmin,Principal,HrOfficer")]
+    [Authorize(Roles = "SystemAdmin,Principal,HrOfficer,AcademicCoordinator,Teacher,Accountant,ProcurementOfficer")]
     public async Task<IActionResult> GetLeaves(
         [FromQuery] Guid? staffId = null,
         [FromQuery] string? status = null,
@@ -120,6 +120,15 @@ public class HRMController : ControllerBase
         [FromQuery] int pageSize = 20)
     {
         if (_currentUser.CampusId is null) return Forbid();
+
+        // Non-admin staff may only view their own leave requests.
+        var isAdminRole = _currentUser.Roles.Any(r => r is "SystemAdmin" or "Principal" or "HrOfficer");
+        if (!isAdminRole)
+        {
+            if (!Guid.TryParse(_currentUser.UserId, out var selfId)) return Forbid();
+            staffId = selfId;
+        }
+
         var result = await _mediator.Send(new GetLeavesQuery(
             _currentUser.CampusId.Value, staffId, status, pageNumber, pageSize));
         return Ok(result.Value);
