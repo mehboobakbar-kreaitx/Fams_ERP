@@ -55,7 +55,11 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
                 return Result<LoginDto>.Failure("Invalid MFA code.");
         }
 
-        var accessExpiry = int.Parse(_config["Jwt:AccessTokenExpiryMinutes"] ?? "30");
+        // PRD NFR-09: staff sessions expire in 30 min; students and parents in 60 min.
+        var isStudentOrParent = user.Roles.Any(r => r is "Student" or "Parent");
+        var accessExpiry = isStudentOrParent
+            ? int.Parse(_config["Jwt:StudentAccessTokenExpiryMinutes"] ?? "60")
+            : int.Parse(_config["Jwt:AccessTokenExpiryMinutes"] ?? "30");
         var refreshExpiry = int.Parse(_config["Jwt:RefreshTokenExpiryDays"] ?? "7");
         var fullName = $"{user.FirstName} {user.LastName}";
 

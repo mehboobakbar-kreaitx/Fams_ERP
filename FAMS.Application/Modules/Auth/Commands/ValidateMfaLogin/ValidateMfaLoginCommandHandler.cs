@@ -27,12 +27,27 @@ public class ValidateMfaLoginCommandHandler : IRequestHandler<ValidateMfaLoginCo
 
         var user = await _identity.FindByIdAsync(userId);
         if (user is null) return Result<LoginDto>.Failure("User not found.");
-        if (!user.TwoFactorEnabled) return Result<LoginDto>.Failure("MFA is not enabled.");
 
-        if (!await _identity.VerifyTwoFactorTokenAsync(user.Id, request.Code))
-            return Result<LoginDto>.Failure("Invalid MFA code.");
+        if (!user.TwoFactorEnabled)
+        {
+            // Enrollment path: enable 2FA and verify in one atomic step so the
+            // caller never needs a separate verify-mfa round-trip. This eliminates
+            // the stuck state where verify-mfa succeeds but validate-mfa-login then
+            // fails (leaving TwoFactorEnabled=true but no tokens issued).
+            var enrolled = await _identity.EnableTwoFactorAsync(user.Id, request.Code);
+            if (!enrolled) return Result<LoginDto>.Failure("Invalid MFA code.");
+        }
+        else
+        {
+            if (!await _identity.VerifyTwoFactorTokenAsync(user.Id, request.Code))
+                return Result<LoginDto>.Failure("Invalid MFA code.");
+        }
 
-        var accessExpiry = int.Parse(_config["Jwt:AccessTokenExpiryMinutes"] ?? "30");
+        // PRD NFR-09: staff sessions expire in 30 min; students and parents in 60 min.
+        var isStudentOrParent = user.Roles.Any(r => r is "Student" or "Parent");
+        var accessExpiry = isStudentOrParent
+            ? int.Parse(_config["Jwt:StudentAccessTokenExpiryMinutes"] ?? "60")
+            : int.Parse(_config["Jwt:AccessTokenExpiryMinutes"] ?? "30");
         var refreshExpiry = int.Parse(_config["Jwt:RefreshTokenExpiryDays"] ?? "7");
         var fullName = $"{user.FirstName} {user.LastName}";
 

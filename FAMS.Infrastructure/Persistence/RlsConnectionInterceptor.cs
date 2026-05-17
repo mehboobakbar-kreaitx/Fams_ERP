@@ -59,7 +59,10 @@ public class RlsConnectionInterceptor : DbConnectionInterceptor
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to apply RLS session variables; queries may fail or return empty.");
+            // Never continue with a connection whose tenant scope could not be set —
+            // a silent fallback here risks leaking cross-campus data to the wrong user.
+            _logger.LogError(ex, "Failed to apply RLS session variables. Aborting to prevent data leak.");
+            throw;
         }
     }
 }
