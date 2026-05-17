@@ -51,7 +51,7 @@ export default function AttendancePage() {
     },
   })
 
-  const allStudents = studentsQuery.data ?? []
+  const allStudents = useMemo(() => studentsQuery.data ?? [], [studentsQuery.data])
 
   const sections: SectionOption[] = useMemo(() => {
     const seen = new Map<string, SectionOption>()

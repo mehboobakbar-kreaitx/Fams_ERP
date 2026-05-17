@@ -8,7 +8,7 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1'
 const SKIP_HEADER = 'x-skip-error-toast'
 
 function pickDetail(err: AxiosError): string {
-  const data: any = err.response?.data
+  const data = err.response?.data
   if (typeof data === 'string') return data
   if (data?.error) return String(data.error)
   if (data?.detail) return String(data.detail)
