@@ -36,23 +36,24 @@ public class AuthEndpointsTests : IClassFixture<FamsWebAppFactory>, IAsyncLifeti
     }
 
     [Fact]
-    public async Task Login_WrongPassword_Returns400()
+    public async Task Login_WrongPassword_Returns401()
     {
         var payload = new { email = "teacher@campus1.fams.io", password = "Wrong@2026!" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/auth/login", payload);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // Auth failures return 401 (invalid credentials), not 400
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
-    public async Task Login_UnknownEmail_Returns400()
+    public async Task Login_UnknownEmail_Returns401()
     {
         var payload = new { email = "nobody@nowhere.test", password = "Pass@123!" };
 
         var response = await _client.PostAsJsonAsync("/api/v1/auth/login", payload);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -90,7 +91,7 @@ public class AuthEndpointsTests : IClassFixture<FamsWebAppFactory>, IAsyncLifeti
     }
 
     [Fact]
-    public async Task Refresh_WrongRefreshToken_Returns400()
+    public async Task Refresh_WrongRefreshToken_Returns401()
     {
         var loginPayload = new { email = "teacher@campus1.fams.io", password = "Teacher@2026!" };
         var loginResp = await _client.PostAsJsonAsync("/api/v1/auth/login", loginPayload);
@@ -100,6 +101,7 @@ public class AuthEndpointsTests : IClassFixture<FamsWebAppFactory>, IAsyncLifeti
         var payload = new { accessToken = access, refreshToken = "invalid-refresh" };
         var response = await _client.PostAsJsonAsync("/api/v1/auth/refresh", payload);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        // Refresh with bad token → 401 (same as login failures)
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }
