@@ -9,4 +9,12 @@ public record EnrollApplicantCommand(
     Guid SectionId,
     string RollNumber,
     string EmergencyContactName,
-    string EmergencyContactPhone) : IRequest<Result<Guid>>;
+    string EmergencyContactPhone,
+    // Optional parent fields — if CNIC is supplied a Parent record is created/linked
+    string? ParentFirstName = null,
+    string? ParentLastName = null,
+    string? ParentCnic = null,
+    string? ParentPhone = null,
+    string? ParentEmail = null,
+    string? ParentRelationship = null,
+    string? ParentAddress = null) : IRequest<Result<Guid>>;

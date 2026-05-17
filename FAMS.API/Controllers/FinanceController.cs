@@ -27,6 +27,7 @@ public class FinanceController : ControllerBase
     }
 
     [HttpGet("invoices")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Executive,Student,Parent")]
     public async Task<IActionResult> GetInvoices([FromQuery] Guid? studentId = null,
         [FromQuery] PaymentStatus? status = null, [FromQuery] string? termName = null,
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
@@ -80,6 +81,7 @@ public class FinanceController : ControllerBase
     }
 
     [HttpGet("payments/{paymentId:guid}/receipt.pdf")]
+    [Authorize(Roles = "SystemAdmin,Principal,Accountant,HrOfficer,Executive,Student,Parent")]
     public async Task<IActionResult> ReceiptPdf(Guid paymentId, [FromServices] IPdfService pdf, CancellationToken ct)
     {
         var bytes = await pdf.GenerateFeeReceiptAsync(paymentId, ct);

@@ -21,6 +21,7 @@ public class FamsDbContext : IdentityDbContext<ApplicationUser>, IFamsDbContext
 
     public DbSet<School> Schools => Set<School>();
     public DbSet<Campus> Campuses => Set<Campus>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Parent> Parents => Set<Parent>();
     public DbSet<Staff> StaffMembers => Set<Staff>();

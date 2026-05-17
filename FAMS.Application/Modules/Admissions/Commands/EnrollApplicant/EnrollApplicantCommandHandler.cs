@@ -60,25 +60,76 @@ public class EnrollApplicantCommandHandler : IRequestHandler<EnrollApplicantComm
             email: application.Email);
 
         student.CampusId = application.CampusId;
-        _db.Students.Add(student);
 
+        // ── Parent linkage ────────────────────────────────────────────────────
+        if (!string.IsNullOrWhiteSpace(request.ParentCnic))
+        {
+            var parent = await _db.Parents
+                .FirstOrDefaultAsync(p => p.CampusId == application.CampusId && p.CNIC == request.ParentCnic, cancellationToken);
+
+            if (parent is null)
+            {
+                parent = Parent.Create(
+                    request.ParentFirstName!,
+                    request.ParentLastName!,
+                    request.ParentCnic,
+                    request.ParentPhone!,
+                    request.ParentAddress!,
+                    request.ParentRelationship!,
+                    request.ParentEmail);
+                parent.CampusId = application.CampusId;
+                _db.Parents.Add(parent);
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+
+            student.AssignParent(parent.Id);
+
+            // Activate parent portal if email is available and not yet enabled
+            if (!string.IsNullOrWhiteSpace(request.ParentEmail) && !parent.PortalAccessEnabled)
+            {
+                var existingParentAccount = await _identity.FindByEmailAsync(request.ParentEmail);
+                if (existingParentAccount is null)
+                {
+                    var parentTempPwd = $"FAMS@{request.ParentCnic[..5]}";
+                    var (parentOk, _, parentErr) = await _identity.CreateUserAsync(
+                        request.ParentEmail, parentTempPwd,
+                        request.ParentFirstName!, request.ParentLastName!,
+                        schoolId: null, campusId: application.CampusId, role: "Parent");
+
+                    if (parentOk)
+                        parent.EnablePortalAccess();
+                    else
+                        _logger.LogWarning("Could not create parent portal for CNIC {Cnic}: {Error}", request.ParentCnic, parentErr);
+                }
+                else
+                {
+                    parent.EnablePortalAccess();
+                }
+            }
+        }
+
+        _db.Students.Add(student);
         application.Review(ApplicationStatus.Enrolled, "Enrolled via admission process.", Guid.Empty);
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        // Create student portal credentials
+        // ── Student portal credentials ─────────────────────────────────────────
         var tempPassword = $"FAMS@{request.RollNumber}";
-        var (succeeded, _, error) = await _identity.CreateUserAsync(
-            application.Email,
-            tempPassword,
-            application.FirstName,
-            application.LastName,
-            schoolId: null,
-            campusId: application.CampusId,
-            role: "Student");
+        var existingAccount = await _identity.FindByEmailAsync(application.Email);
+        if (existingAccount is null)
+        {
+            var (succeeded, _, error) = await _identity.CreateUserAsync(
+                application.Email, tempPassword,
+                application.FirstName, application.LastName,
+                schoolId: null, campusId: application.CampusId, role: "Student");
 
-        if (!succeeded)
-            _logger.LogWarning("Could not create portal account for student {Id}: {Error}", student.Id, error);
+            if (!succeeded)
+                _logger.LogWarning("Could not create portal account for student {Id}: {Error}", student.Id, error);
+        }
+        else
+        {
+            _logger.LogInformation("Portal account already exists for student email {Email}; skipping creation", application.Email);
+        }
 
         try
         {

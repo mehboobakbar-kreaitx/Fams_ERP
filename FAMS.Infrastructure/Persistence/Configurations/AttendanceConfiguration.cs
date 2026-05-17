@@ -17,6 +17,9 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
         b.HasIndex(a => new { a.StaffId, a.Date })
             .IsUnique()
             .HasFilter("\"StaffId\" IS NOT NULL");
+        // Supports campus-wide daily attendance reports and principal dashboard.
+        b.HasIndex(a => new { a.CampusId, a.Date })
+            .HasFilter("\"StudentId\" IS NOT NULL");
     }
 }
 
@@ -46,6 +49,8 @@ public class ResultConfiguration : IEntityTypeConfiguration<Result>
         b.Property(r => r.ExamType).HasMaxLength(50);
         b.Property(r => r.Grade).HasMaxLength(10);
         b.HasIndex(r => new { r.StudentId, r.SubjectId, r.TermName, r.ExamType }).IsUnique();
+        // Supports cross-campus analytics queries filtered by term.
+        b.HasIndex(r => new { r.CampusId, r.TermName });
         b.HasOne(r => r.Student).WithMany(s => s.Results).HasForeignKey(r => r.StudentId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(r => r.Subject).WithMany().HasForeignKey(r => r.SubjectId).OnDelete(DeleteBehavior.Restrict);
     }

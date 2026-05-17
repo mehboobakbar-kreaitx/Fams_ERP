@@ -29,6 +29,7 @@ public class ConfigController : ControllerBase
     // ── Programs (lookup for fee template form) ───────────────────────────────
 
     [HttpGet("/api/v1/programs")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Accountant,HrOfficer,ProcurementOfficer,Teacher,Executive")]
     public async Task<IActionResult> GetPrograms(CancellationToken ct)
     {
         var programs = await _db.Programs.AsNoTracking()
@@ -42,6 +43,7 @@ public class ConfigController : ControllerBase
     // ── Academic Terms ────────────────────────────────────────────────────────
 
     [HttpGet("terms")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Accountant,HrOfficer,ProcurementOfficer,Teacher,Executive")]
     public async Task<IActionResult> GetTerms()
     {
         var result = await _mediator.Send(new GetAcademicTermsQuery());
@@ -60,6 +62,7 @@ public class ConfigController : ControllerBase
     // ── Fee Structures ────────────────────────────────────────────────────────
 
     [HttpGet("fee-templates")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Accountant,Executive")]
     public async Task<IActionResult> GetFeeStructures()
     {
         var result = await _mediator.Send(new GetFeeStructuresQuery());
@@ -78,6 +81,7 @@ public class ConfigController : ControllerBase
     // ── Grading Scale ─────────────────────────────────────────────────────────
 
     [HttpGet("grading-scales")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher,Executive")]
     public async Task<IActionResult> GetGradingScale()
     {
         var result = await _mediator.Send(new GetGradingScaleQuery());
@@ -94,6 +98,7 @@ public class ConfigController : ControllerBase
     // ── Notification Templates (static — no persistence layer yet) ───────────
 
     [HttpGet("notification-templates")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
     public IActionResult GetNotificationTemplates()
     {
         var templates = new[]

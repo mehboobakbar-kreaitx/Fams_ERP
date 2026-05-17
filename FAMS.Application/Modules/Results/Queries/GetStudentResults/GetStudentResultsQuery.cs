@@ -7,4 +7,5 @@ public record GetStudentResultsQuery(
     Guid StudentId,
     string? TermName = null,
     string? ExamType = null,
-    bool PublishedOnly = true) : IRequest<Result<IReadOnlyList<StudentResultDto>>>;
+    bool PublishedOnly = true,
+    Guid? CampusId = null) : IRequest<Result<IReadOnlyList<StudentResultDto>>>;

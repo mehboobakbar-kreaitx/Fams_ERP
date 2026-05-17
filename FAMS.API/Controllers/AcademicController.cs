@@ -62,10 +62,12 @@ public class AcademicController : ControllerBase
     }
 
     [HttpGet("attendance/student/{studentId:guid}")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher,HrOfficer,Executive,Student,Parent")]
     public async Task<IActionResult> GetStudentAttendance(
         Guid studentId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 30)
     {
         // Students may only fetch their own records; staff roles may fetch any.
+        // TODO: Parent ownership check — verify studentId belongs to requesting parent's children.
         if (_currentUser.Roles.Contains("Student") &&
             _currentUser.UserId != studentId.ToString())
             return Forbid();
@@ -75,11 +77,13 @@ public class AcademicController : ControllerBase
     }
 
     [HttpGet("attendance/student/{studentId:guid}/summary")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher,HrOfficer,Executive,Student,Parent")]
     public async Task<IActionResult> GetStudentAttendanceSummary(
         Guid studentId,
         [FromQuery] DateTime? startDate = null,
         [FromQuery] DateTime? endDate = null)
     {
+        // TODO: Parent ownership check — verify studentId belongs to requesting parent's children.
         if (_currentUser.Roles.Contains("Student") &&
             _currentUser.UserId != studentId.ToString())
             return Forbid();
@@ -130,9 +134,12 @@ public class AcademicController : ControllerBase
 
     [HttpPost("exams/{examId:guid}/admit-cards")]
     [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
-    public async Task<IActionResult> GenerateAdmitCards(Guid examId, [FromQuery] Guid? sectionId = null)
+    public async Task<IActionResult> GenerateAdmitCards(
+        Guid examId,
+        [FromQuery] Guid? sectionId = null,
+        [FromQuery] decimal attendanceThreshold = 75m)
     {
-        var result = await _mediator.Send(new GenerateAdmitCardsCommand(examId, sectionId));
+        var result = await _mediator.Send(new GenerateAdmitCardsCommand(examId, sectionId, attendanceThreshold));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
     }
 }

@@ -17,7 +17,8 @@ public class UnpublishResultsCommandHandler : IRequestHandler<UnpublishResultsCo
             .Where(r => r.SubjectId == request.SubjectId
                      && r.ExamType == request.ExamType
                      && r.TermName == request.TermName
-                     && r.IsPublished)
+                     && r.IsPublished
+                     && (!request.CampusId.HasValue || r.CampusId == request.CampusId.Value))
             .ToListAsync(cancellationToken);
 
         if (results.Count == 0)

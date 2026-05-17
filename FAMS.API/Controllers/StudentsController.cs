@@ -31,6 +31,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Teacher,Executive")]
     public async Task<IActionResult> GetAll([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20,
         [FromQuery] string? searchTerm = null, [FromQuery] Guid? classId = null, [FromQuery] StudentStatus? status = null)
     {
@@ -41,6 +42,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Teacher,Executive")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var result = await _mediator.Send(new GetStudentByIdQuery(id));
@@ -85,6 +87,7 @@ public class StudentsController : ControllerBase
     }
 
     [HttpGet("{id:guid}/documents")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,HrOfficer,ProcurementOfficer,Accountant,Teacher,Executive")]
     public async Task<IActionResult> GetDocuments(Guid id)
     {
         var result = await _mediator.Send(new GetStudentDocumentsQuery(id));

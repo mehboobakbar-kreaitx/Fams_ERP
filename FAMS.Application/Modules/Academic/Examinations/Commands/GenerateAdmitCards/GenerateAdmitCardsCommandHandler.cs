@@ -47,6 +47,39 @@ public class GenerateAdmitCardsCommandHandler
         if (students.Count == 0)
             return Result<GenerateAdmitCardsResult>.Failure("No students found for this exam's class.");
 
+        // ── Attendance eligibility filter ─────────────────────────────────────
+        int ineligibleSkipped = 0;
+        if (request.AttendanceThresholdPercent > 0m)
+        {
+            var studentIdList = students.Select(s => s.Id).ToList();
+            var attendanceCounts = await _db.Attendances
+                .Where(a => a.StudentId != null && studentIdList.Contains(a.StudentId.Value))
+                .GroupBy(a => a.StudentId!.Value)
+                .Select(g => new
+                {
+                    StudentId = g.Key,
+                    Total = g.Count(),
+                    Present = g.Count(a => a.IsPresent)
+                })
+                .ToListAsync(cancellationToken);
+
+            var countMap = attendanceCounts.ToDictionary(c => c.StudentId);
+            var eligible = students.Where(s =>
+            {
+                if (!countMap.TryGetValue(s.Id, out var counts)) return false;
+                var pct = counts.Total == 0 ? 0m : (decimal)counts.Present / counts.Total * 100m;
+                return pct >= request.AttendanceThresholdPercent;
+            }).ToList();
+
+            ineligibleSkipped = students.Count - eligible.Count;
+            if (ineligibleSkipped > 0)
+                _logger.LogInformation(
+                    "Admit card generation for exam {ExamId}: {Count} student(s) skipped due to attendance below {Threshold}%",
+                    exam.Id, ineligibleSkipped, request.AttendanceThresholdPercent);
+
+            students = eligible;
+        }
+
         var bucket = _config["Minio:BucketExports"] ?? "fams-exports";
         var cards = new List<AdmitCardEntry>(students.Count);
 
@@ -68,6 +101,6 @@ public class GenerateAdmitCardsCommandHandler
         }
 
         return Result<GenerateAdmitCardsResult>.Success(
-            new GenerateAdmitCardsResult(exam.Id, cards.Count, cards));
+            new GenerateAdmitCardsResult(exam.Id, cards.Count, ineligibleSkipped, cards));
     }
 }

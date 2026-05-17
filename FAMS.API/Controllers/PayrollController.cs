@@ -52,6 +52,7 @@ public class PayrollController : ControllerBase
     }
 
     [HttpGet("staff/{staffId:guid}/payslip/{year:int}/{month:int}.pdf")]
+    [Authorize(Roles = "SystemAdmin,Principal,Accountant,HrOfficer,Executive,Teacher,AcademicCoordinator,ProcurementOfficer")]
     public async Task<IActionResult> PayslipPdf(Guid staffId, int year, int month,
         [FromServices] IPdfService pdf, CancellationToken ct)
     {

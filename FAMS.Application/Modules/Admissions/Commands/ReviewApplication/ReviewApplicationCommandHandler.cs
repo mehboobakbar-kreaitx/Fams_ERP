@@ -32,7 +32,7 @@ public class ReviewApplicationCommandHandler : IRequestHandler<ReviewApplication
         {
             ApplicationStatus.Applied      => new[] { ApplicationStatus.UnderReview, ApplicationStatus.Declined },
             ApplicationStatus.UnderReview  => new[] { ApplicationStatus.Offered, ApplicationStatus.Declined },
-            ApplicationStatus.Offered      => new[] { ApplicationStatus.Enrolled, ApplicationStatus.Withdrawn },
+            ApplicationStatus.Offered      => new[] { ApplicationStatus.Withdrawn },
             _                              => Array.Empty<ApplicationStatus>(),
         };
         if (!allowed.Contains(request.NewStatus))

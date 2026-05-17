@@ -126,8 +126,9 @@ public static class ServiceExtensions
         });
 
         services.AddHealthChecks()
-            .AddNpgSql(configuration.GetConnectionString("DefaultConnection") ?? string.Empty, name: "database")
-            .AddRedis(configuration["Redis:Connection"] ?? "localhost:6379", name: "redis");
+            .AddCheck("self", () => Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(), tags: ["live"])
+            .AddNpgSql(configuration.GetConnectionString("DefaultConnection") ?? string.Empty, name: "database", tags: ["ready"])
+            .AddRedis(configuration["Redis:Connection"] ?? "localhost:6379", name: "redis", tags: ["ready"]);
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUserService, CurrentUserService>();

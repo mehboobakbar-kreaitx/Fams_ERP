@@ -94,6 +94,7 @@ public class HRMController : ControllerBase
     // ---------- Leaves ----------
 
     [HttpPost("leaves")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher,HrOfficer,Accountant,ProcurementOfficer")]
     public async Task<IActionResult> ApplyLeave([FromBody] ApplyLeaveCommand command)
     {
         var result = await _mediator.Send(command);

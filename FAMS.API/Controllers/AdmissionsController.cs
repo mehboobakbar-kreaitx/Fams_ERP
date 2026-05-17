@@ -62,7 +62,9 @@ public class AdmissionsController : ControllerBase
     {
         var result = await _mediator.Send(new EnrollApplicantCommand(
             id, body.ClassId, body.SectionId, body.RollNumber,
-            body.EmergencyContactName, body.EmergencyContactPhone));
+            body.EmergencyContactName, body.EmergencyContactPhone,
+            body.ParentFirstName, body.ParentLastName, body.ParentCnic,
+            body.ParentPhone, body.ParentEmail, body.ParentRelationship, body.ParentAddress));
         return result.IsSuccess ? Ok(new { studentId = result.Value }) : BadRequest(result);
     }
 
@@ -85,5 +87,18 @@ public class AdmissionsController : ControllerBase
 }
 
 public record ReviewApplicationBody(ApplicationStatus NewStatus, string ReviewNotes);
-public record EnrollApplicantBody(Guid ClassId, Guid SectionId, string RollNumber, string EmergencyContactName, string EmergencyContactPhone);
+public record EnrollApplicantBody(
+    Guid ClassId,
+    Guid SectionId,
+    string RollNumber,
+    string EmergencyContactName,
+    string EmergencyContactPhone,
+    // Optional — supply to create/link a parent and activate their portal
+    string? ParentFirstName = null,
+    string? ParentLastName = null,
+    string? ParentCnic = null,
+    string? ParentPhone = null,
+    string? ParentEmail = null,
+    string? ParentRelationship = null,
+    string? ParentAddress = null);
 

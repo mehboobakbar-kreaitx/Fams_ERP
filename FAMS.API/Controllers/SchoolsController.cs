@@ -39,7 +39,7 @@ public class SchoolsController : ControllerBase
     }
 
     [HttpGet("{id:guid}/stats")]
-    [Authorize(Roles = "SystemAdmin,Principal,Executive")]
+    [Authorize(Roles = "SystemAdmin,Executive")]
     public async Task<IActionResult> GetStats(Guid id)
     {
         var result = await _mediator.Send(new GetSchoolStatsQuery(id));

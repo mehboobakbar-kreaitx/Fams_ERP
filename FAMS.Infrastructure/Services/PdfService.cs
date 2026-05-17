@@ -19,7 +19,7 @@ public class PdfService : IPdfService
     }
 
     // ------------- Grade Card -------------
-    public async Task<byte[]> GenerateGradeCardAsync(Guid studentId, string termName, CancellationToken ct = default)
+    public async Task<byte[]> GenerateGradeCardAsync(Guid studentId, string termName, string? examType = null, CancellationToken ct = default)
     {
         var student = await _db.Students.AsNoTracking()
             .Where(s => s.Id == studentId)
@@ -32,7 +32,8 @@ public class PdfService : IPdfService
         var sectionName = await _db.Sections.AsNoTracking().Where(c => c.Id == student.SectionId).Select(c => c.Name).FirstOrDefaultAsync(ct);
 
         var results = await _db.Results.AsNoTracking()
-            .Where(r => r.StudentId == studentId && r.TermName == termName && r.IsPublished)
+            .Where(r => r.StudentId == studentId && r.TermName == termName && r.IsPublished
+                     && (examType == null || r.ExamType == examType))
             .Join(_db.Subjects.AsNoTracking(), r => r.SubjectId, s => s.Id, (r, s) => new
             {
                 Subject = s.Name,

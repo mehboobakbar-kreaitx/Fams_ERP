@@ -24,6 +24,8 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         b.HasIndex(s => new { s.CampusId, s.RollNumber }).IsUnique();
         b.HasIndex(s => s.Status);
         b.HasIndex(s => s.ClassId);
+        // Supports enrollment count queries and recent-admissions ordering in dashboards.
+        b.HasIndex(s => new { s.CampusId, s.Status, s.EnrollmentDate });
 
         b.HasOne(s => s.Campus).WithMany(c => c.Students).HasForeignKey(s => s.CampusId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(s => s.Parent).WithMany(p => p.Students).HasForeignKey(s => s.ParentId).OnDelete(DeleteBehavior.SetNull);

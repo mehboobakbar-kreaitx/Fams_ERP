@@ -8,8 +8,10 @@ public record AdmitCardEntry(Guid StudentId, string StudentName, string RollNumb
 public record GenerateAdmitCardsResult(
     Guid ExamId,
     int Generated,
+    int IneligibleSkipped,
     IReadOnlyList<AdmitCardEntry> Cards);
 
 public record GenerateAdmitCardsCommand(
     Guid ExamId,
-    Guid? SectionId = null) : IRequest<Result<GenerateAdmitCardsResult>>;
+    Guid? SectionId = null,
+    decimal AttendanceThresholdPercent = 75m) : IRequest<Result<GenerateAdmitCardsResult>>;

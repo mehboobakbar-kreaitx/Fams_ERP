@@ -23,7 +23,10 @@ public class GetStudentAttendanceQueryHandler
             .Select(a => new StudentAttendanceRecordDto(
                 a.Id,
                 a.Date,
-                a.IsLate ? "Late" : a.IsPresent ? "Present" : "Absent",
+                a.IsLate ? "Late"
+                    : a.IsPresent ? "Present"
+                    : a.Remarks == "On approved leave" ? "Leave"
+                    : "Absent",
                 a.Remarks))
             .ToListAsync(cancellationToken);
 

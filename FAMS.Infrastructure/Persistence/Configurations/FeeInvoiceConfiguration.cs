@@ -18,6 +18,8 @@ public class FeeInvoiceConfiguration : IEntityTypeConfiguration<FeeInvoice>
         b.Property(i => i.Status).HasConversion<int>();
         b.HasIndex(i => i.InvoiceNumber).IsUnique();
         b.HasIndex(i => new { i.StudentId, i.TermName });
+        // Supports outstanding-fees queries in dashboards and collection summaries.
+        b.HasIndex(i => new { i.CampusId, i.Status });
         b.HasOne(i => i.Student).WithMany(s => s.FeeInvoices).HasForeignKey(i => i.StudentId).OnDelete(DeleteBehavior.Restrict);
     }
 }

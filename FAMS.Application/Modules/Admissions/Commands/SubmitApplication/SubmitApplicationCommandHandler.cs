@@ -1,6 +1,7 @@
 using FAMS.Application.Common.Interfaces;
 using FAMS.Application.Common.Models;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AppEntity = FAMS.Domain.Entities.Application;
 
@@ -22,6 +23,11 @@ public class SubmitApplicationCommandHandler : IRequestHandler<SubmitApplication
 
     public async Task<Result<Guid>> Handle(SubmitApplicationCommand request, CancellationToken cancellationToken)
     {
+        var campusExists = await _db.Campuses
+            .AnyAsync(c => c.Id == request.CampusId && !c.IsDeleted, cancellationToken);
+        if (!campusExists)
+            return Result<Guid>.Failure("The specified campus does not exist.");
+
         var application = AppEntity.Create(
             request.FirstName, request.LastName, request.FatherName,
             request.DateOfBirth, request.Gender, request.Phone, request.Email, request.Address,

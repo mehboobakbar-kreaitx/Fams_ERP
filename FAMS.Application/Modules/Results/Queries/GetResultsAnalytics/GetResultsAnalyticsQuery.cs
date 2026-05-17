@@ -7,4 +7,5 @@ public record GetResultsAnalyticsQuery(
     Guid SubjectId,
     string ExamType,
     string TermName,
-    decimal PassPercentageThreshold = 40m) : IRequest<Result<ResultsAnalyticsDto>>;
+    decimal PassPercentageThreshold = 40m,
+    Guid? CampusId = null) : IRequest<Result<ResultsAnalyticsDto>>;

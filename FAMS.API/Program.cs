@@ -68,6 +68,14 @@ try
     app.MapControllers();
     app.MapMetrics("/metrics");
     app.MapHub<NotificationHub>("/hubs/notifications");
+    app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+    {
+        Predicate = check => check.Tags.Contains("live"),
+    });
+    app.MapHealthChecks("/health/ready", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+    {
+        Predicate = check => check.Tags.Contains("ready"),
+    });
     app.MapHealthChecks("/health");
 
     app.UseHangfireDashboard("/hangfire", new DashboardOptions

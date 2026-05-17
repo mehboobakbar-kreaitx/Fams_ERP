@@ -1,4 +1,5 @@
 import Dexie, { type Table } from 'dexie'
+import toast from 'react-hot-toast'
 import { axiosClient } from '../api/axiosClient'
 
 export type QueuedAttendance = {
@@ -50,6 +51,15 @@ export async function flushQueue(): Promise<{ sent: number; failed: number }> {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    flushQueue().catch(() => undefined)
+    flushQueue()
+      .then(({ sent, failed }) => {
+        if (sent === 0 && failed === 0) return
+        if (failed === 0) {
+          toast.success(`Synced ${sent} queued attendance batch${sent === 1 ? '' : 'es'}.`)
+        } else {
+          toast(`Synced ${sent}, ${failed} batch${failed === 1 ? '' : 'es'} still pending — will retry when online.`, { icon: '⚠️' })
+        }
+      })
+      .catch(() => undefined)
   })
 }

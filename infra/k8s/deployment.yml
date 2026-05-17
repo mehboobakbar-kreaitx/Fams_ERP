@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: fams-api
+  namespace: fams
   labels:
     app: fams-api
 spec:
@@ -14,6 +15,8 @@ spec:
       labels:
         app: fams-api
     spec:
+      imagePullSecrets:
+        - name: ghcr-credentials
       containers:
         - name: fams-api
           image: ghcr.io/your-org/fams-api:latest
@@ -24,16 +27,18 @@ spec:
               value: Production
           livenessProbe:
             httpGet:
-              path: /health
+              path: /health/live
               port: 5000
             initialDelaySeconds: 30
             periodSeconds: 15
+            failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /health
+              path: /health/ready
               port: 5000
             initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               memory: "256Mi"

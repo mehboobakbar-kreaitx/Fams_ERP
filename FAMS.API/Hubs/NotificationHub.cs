@@ -31,6 +31,17 @@ public class NotificationHub : Hub
 
     public async Task SendNotificationToCampus(string campusId, string message)
     {
+        var isSystemAdmin = Context.User?.IsInRole("SystemAdmin") ?? false;
+        var canBroadcast = isSystemAdmin
+            || (Context.User?.IsInRole("Principal") ?? false)
+            || (Context.User?.IsInRole("AcademicCoordinator") ?? false);
+
+        if (!canBroadcast) return;
+
+        // Prevent cross-campus broadcast unless SystemAdmin.
+        var callerCampusId = Context.User?.FindFirst("campus_id")?.Value;
+        if (!isSystemAdmin && callerCampusId != campusId) return;
+
         await Clients.Group($"campus_{campusId}").SendAsync("ReceiveNotification", message);
     }
 }

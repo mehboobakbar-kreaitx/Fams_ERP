@@ -24,6 +24,7 @@ public class AssetsController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "SystemAdmin,Principal,ProcurementOfficer,Accountant,HrOfficer,Executive")]
     public async Task<IActionResult> Get([FromQuery] string? category = null, [FromQuery] AssetStatus? status = null,
         [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 50)
     {

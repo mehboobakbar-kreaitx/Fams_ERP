@@ -18,6 +18,9 @@ public class GetStudentResultsQueryHandler
         var query = _db.Results.AsNoTracking()
             .Where(r => r.StudentId == request.StudentId);
 
+        if (request.CampusId.HasValue)
+            query = query.Where(r => r.CampusId == request.CampusId.Value);
+
         if (request.PublishedOnly) query = query.Where(r => r.IsPublished);
         if (!string.IsNullOrWhiteSpace(request.TermName))
             query = query.Where(r => r.TermName == request.TermName);

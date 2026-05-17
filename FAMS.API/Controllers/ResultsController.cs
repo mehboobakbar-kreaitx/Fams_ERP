@@ -43,13 +43,14 @@ public class ResultsController : ControllerBase
 
     [HttpPost("unpublish")]
     [Authorize(Roles = "SystemAdmin,Principal")]
-    public async Task<IActionResult> Unpublish([FromBody] UnpublishResultsCommand command)
+    public async Task<IActionResult> Unpublish([FromBody] UnpublishResultsBody body)
     {
-        var result = await _mediator.Send(command);
+        var result = await _mediator.Send(new UnpublishResultsCommand(body.SubjectId, body.ExamType, body.TermName, _currentUser.CampusId));
         return result.IsSuccess ? Ok(new { unpublished = result.Value }) : BadRequest(result);
     }
 
     [HttpGet("student/{studentId:guid}")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher,Accountant,Executive,Student,Parent")]
     public async Task<IActionResult> GetForStudent(
         Guid studentId,
         [FromQuery] string? termName = null,
@@ -57,11 +58,12 @@ public class ResultsController : ControllerBase
         [FromQuery] bool publishedOnly = true)
     {
         // Students may only fetch their own results; staff roles may fetch any student's.
+        // TODO: Parent ownership check — verify studentId belongs to requesting parent's children.
         if (_currentUser.Roles.Contains("Student") &&
             _currentUser.UserId != studentId.ToString())
             return Forbid();
 
-        var result = await _mediator.Send(new GetStudentResultsQuery(studentId, termName, examType, publishedOnly));
+        var result = await _mediator.Send(new GetStudentResultsQuery(studentId, termName, examType, publishedOnly, _currentUser.CampusId));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
     }
 
@@ -73,22 +75,25 @@ public class ResultsController : ControllerBase
         [FromQuery] string termName,
         [FromQuery] decimal passThreshold = 40m)
     {
-        var result = await _mediator.Send(new GetResultsAnalyticsQuery(subjectId, examType, termName, passThreshold));
+        var result = await _mediator.Send(new GetResultsAnalyticsQuery(subjectId, examType, termName, passThreshold, _currentUser.CampusId));
         return result.IsSuccess ? Ok(result.Value) : NotFound(result);
     }
 
     [HttpGet("student/{studentId:guid}/grade-card.pdf")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher,Executive,Student,Parent")]
     public async Task<IActionResult> GradeCardPdf(Guid studentId, [FromQuery] string termName,
-        [FromServices] IPdfService pdf, CancellationToken ct)
+        [FromQuery] string? examType, [FromServices] IPdfService pdf, CancellationToken ct)
     {
+        // TODO: Parent ownership check — verify studentId belongs to requesting parent's children.
         if (_currentUser.Roles.Contains("Student") &&
             _currentUser.UserId != studentId.ToString())
             return Forbid();
 
-        var bytes = await pdf.GenerateGradeCardAsync(studentId, termName, ct);
+        var bytes = await pdf.GenerateGradeCardAsync(studentId, termName, examType, ct);
         return File(bytes, "application/pdf", $"grade-card-{studentId}-{termName}.pdf");
     }
 }
 
 public record PublishResultsBody(Guid SubjectId, string ExamType, string TermName);
+public record UnpublishResultsBody(Guid SubjectId, string ExamType, string TermName);
 

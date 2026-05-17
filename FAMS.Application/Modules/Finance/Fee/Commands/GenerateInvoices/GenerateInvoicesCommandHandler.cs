@@ -16,7 +16,8 @@ public class GenerateInvoicesCommandHandler : IRequestHandler<GenerateInvoicesCo
     public async Task<Result<int>> Handle(GenerateInvoicesCommand request, CancellationToken cancellationToken)
     {
         var activeStudents = await _db.Students
-            .Where(s => s.CampusId == request.CampusId && s.Status == StudentStatus.Active)
+            .Where(s => s.CampusId == request.CampusId
+                     && (s.Status == StudentStatus.Active || s.Status == StudentStatus.Enrolled))
             .Select(s => s.Id)
             .ToListAsync(cancellationToken);
 
@@ -27,7 +28,11 @@ public class GenerateInvoicesCommandHandler : IRequestHandler<GenerateInvoicesCo
         var existing = existingList.ToHashSet();
 
         var toCreate = activeStudents.Where(id => !existing.Contains(id)).ToList();
-        var sequence = await _db.FeeInvoices.CountAsync(cancellationToken) + 1;
+        // Scope the sequence counter to this campus to avoid a full cross-campus table scan.
+        // The prefix already encodes campus+month so global uniqueness is preserved.
+        var campusInvoiceCount = await _db.FeeInvoices
+            .CountAsync(i => i.CampusId == request.CampusId, cancellationToken);
+        var sequence = campusInvoiceCount + 1;
 
         foreach (var studentId in toCreate)
         {
