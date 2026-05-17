@@ -41,8 +41,54 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
               memory: "512Mi"
               cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fams-gateway
+  namespace: fams
+  labels:
+    app: fams-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fams-gateway
+  template:
+    metadata:
+      labels:
+        app: fams-gateway
+    spec:
+      imagePullSecrets:
+        - name: ghcr-credentials
+      containers:
+        - name: fams-gateway
+          image: ghcr.io/your-org/fams-gateway:latest
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "250m"

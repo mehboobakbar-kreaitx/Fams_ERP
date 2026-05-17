@@ -12,11 +12,18 @@ const theme: PortalTheme = {
 }
 
 const navItems: PortalNavItem[] = [
-  { to: '/parent/dashboard',    label: 'Dashboard',    icon: '🏠' },
-  { to: '/parent/children',     label: 'My Children',  icon: '👨‍👩‍👧' },
-  { to: '/parent/attendance',   label: 'Attendance',   icon: '📅' },
-  { to: '/parent/results',      label: 'Results',      icon: '📊' },
-  { to: '/parent/fee',          label: 'Fee',          icon: '💰' },
+  { to: '/parent/dashboard', label: 'Dashboard', icon: '🏠' },
+  {
+    label: 'My Children',
+    icon: '👨‍👩‍👧',
+    defaultOpen: true,
+    children: [
+      { to: '/parent/children',   label: 'Children',   icon: '👨‍👩‍👧' },
+      { to: '/parent/attendance', label: 'Attendance', icon: '📅' },
+      { to: '/parent/results',    label: 'Results',    icon: '📊' },
+      { to: '/parent/fee',        label: 'Fee',        icon: '💳' },
+    ],
+  },
   { to: '/parent/communications', label: 'Communications', icon: '✉️' },
 ]
 

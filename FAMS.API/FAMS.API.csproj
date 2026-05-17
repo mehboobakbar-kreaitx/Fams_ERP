@@ -25,6 +25,8 @@
     <PackageReference Include="Audit.NET" Version="27.*" />
     <PackageReference Include="Audit.EntityFramework.Core" Version="27.*" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="8.*" />
+    <PackageReference Include="Microsoft.AspNetCore.ResponseCompression" Version="2.*" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.*" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.*" />
     <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="8.*" />

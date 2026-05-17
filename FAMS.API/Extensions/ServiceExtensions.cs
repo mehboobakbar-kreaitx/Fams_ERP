@@ -13,9 +13,27 @@ public static class ServiceExtensions
 {
     public static IServiceCollection AddApiServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddResponseCompression(opts =>
+        {
+            opts.EnableForHttps = true;
+            opts.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes.Concat(
+                ["application/json", "application/problem+json"]);
+        });
+
         services.AddControllers();
         services.AddEndpointsApiExplorer();
-        services.AddSignalR();
+
+        // SignalR with optional Redis backplane for horizontal scaling.
+        // Without the backplane, hub messages are in-process only — events
+        // from one API replica never reach clients connected to another replica.
+        var signalRBuilder = services.AddSignalR(opts =>
+        {
+            opts.EnableDetailedErrors = false;
+            opts.MaximumReceiveMessageSize = 32 * 1024;
+        });
+        var redisConn = configuration["Redis:Connection"];
+        if (!string.IsNullOrWhiteSpace(redisConn))
+            signalRBuilder.AddStackExchangeRedis(redisConn);
 
         services.AddSwaggerGen(c =>
         {
@@ -58,7 +76,9 @@ public static class ServiceExtensions
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = jwtIssuer,
                     ValidAudience = jwtAudience,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    RoleClaimType = ClaimTypes.Role,
+                    NameClaimType = ClaimTypes.NameIdentifier,
                 };
 
                 options.Events = new JwtBearerEvents

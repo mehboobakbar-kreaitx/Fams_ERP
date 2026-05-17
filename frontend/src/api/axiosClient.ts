@@ -54,6 +54,15 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
+    // 429 Too Many Requests — honour Retry-After (or default 5 s) then replay once.
+    if (error.response?.status === 429 && !originalRequest._retried429) {
+      originalRequest._retried429 = true
+      const retryAfterHeader = error.response.headers['retry-after']
+      const delayMs = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : 5000
+      await new Promise((res) => setTimeout(res, delayMs))
+      return axiosClient(originalRequest)
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -65,16 +74,18 @@ axiosClient.interceptors.response.use(
       }
 
       originalRequest._retry = true
-      isRefreshing = true
 
       const accessToken = localStorage.getItem('access_token')
       const refreshToken = localStorage.getItem('refresh_token')
       if (!accessToken || !refreshToken) {
+        // Drain the queue before redirecting so callers don't hang.
+        processQueue(error, null)
         authStore.clear()
         window.location.href = '/login'
         return Promise.reject(error)
       }
 
+      isRefreshing = true
       try {
         // Backend RefreshTokenCommand requires both tokens:
         // accessToken — to validate the expired JWT and extract userId

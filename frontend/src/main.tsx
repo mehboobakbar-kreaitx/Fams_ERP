@@ -10,7 +10,14 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 5,
-      retry: 1,
+      // Don't retry auth errors — the Axios interceptor already handles 401 (token
+      // refresh + replay). Retrying 403/429 here would cause duplicate requests or
+      // trigger another refresh with an already-rotated token.
+      retry: (failureCount, error) => {
+        const status = (error as { response?: { status?: number } })?.response?.status
+        if (status === 401 || status === 403 || status === 429) return false
+        return failureCount < 1
+      },
     },
   },
 })

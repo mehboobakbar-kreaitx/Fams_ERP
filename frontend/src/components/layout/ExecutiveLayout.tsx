@@ -13,6 +13,20 @@ const theme: PortalTheme = {
 
 const navItems: PortalNavItem[] = [
   { to: '/executive/dashboard', label: 'Dashboard', icon: '📊' },
+
+  {
+    label: 'Reports & Analytics',
+    icon: '📊',
+    defaultOpen: true,
+    children: [
+      { to: '/executive/reports',                label: 'Reports Hub',      icon: '📊' },
+      { to: '/executive/reports/cross-campus',   label: 'Cross-Campus',     icon: '🌐' },
+      { to: '/executive/reports/campus-kpi',     label: 'Campus KPIs',      icon: '🏆' },
+      { to: '/executive/reports/academic',       label: 'Academic Reports', icon: '📚' },
+      { to: '/executive/reports/attendance',     label: 'Attendance',       icon: '📅' },
+      { to: '/executive/reports/operational',    label: 'Operational',      icon: '⚙️' },
+    ],
+  },
 ]
 
 export default function ExecutiveLayout() {

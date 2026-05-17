@@ -18,7 +18,7 @@ public class GetCampusesQueryHandler : IRequestHandler<GetCampusesQuery, Result<
             .OrderByDescending(c => c.IsMainCampus)
             .ThenBy(c => c.Code)
             .Select(c => new CampusListItemDto(
-                c.Id, c.Name, c.Code, c.City, c.PrincipalName, c.MaxCapacity, c.IsActive, c.IsMainCampus,
+                c.Id, c.SchoolId, c.Name, c.Code, c.City, c.PrincipalName, c.MaxCapacity, c.IsActive, c.IsMainCampus,
                 _db.Students.Count(s => s.CampusId == c.Id &&
                     (s.Status == StudentStatus.Enrolled || s.Status == StudentStatus.Active)),
                 _db.StaffMembers.Count(s => s.CampusId == c.Id && s.IsActive)))

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosClient } from '../../api/axiosClient'
 import { authenticatedLandingPath } from '../../components/auth/rolePortal'
@@ -23,34 +23,29 @@ type LoginResponse = AuthSessionPayload & {
 
 export default function MfaSetupPage() {
   const navigate = useNavigate()
-  const [pending, setPending] = useState<PendingMfaState | null>(null)
+  // Lazy init from localStorage: no null-email flash on first render.
+  const [pending] = useState<PendingMfaState | null>(() => authStore.getPendingMfa())
   const [setup, setSetup] = useState<MfaSetupResponse | null>(null)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  // Guard against React StrictMode double-invocation and concurrent re-mounts.
-  // The ref persists across the strict-mode unmount/remount cycle so the
-  // single-use challenge token is only consumed once.
-  const setupInitiated = useRef(false)
 
   useEffect(() => {
-    if (setupInitiated.current) return
-    setupInitiated.current = true
-
-    const current = authStore.getPendingMfa()
-    if (!current) {
+    if (!pending) {
       navigate('/login', { replace: true })
       return
     }
 
-    setPending(current)
-
+    // AbortController handles React 18 StrictMode's double-invocation cleanly:
+    // the first effect fires, gets aborted by cleanup, then the second fires and
+    // runs to completion. No ref guard needed — setup-mfa is idempotent
+    // (GetOrCreateAuthenticatorKeyAsync returns the same key after the first call).
     const controller = new AbortController()
     axiosClient
       .post<MfaSetupResponse>(
         '/auth/setup-mfa',
-        { mfaChallengeToken: current.mfaChallengeToken },
+        { mfaChallengeToken: pending.mfaChallengeToken },
         { signal: controller.signal, headers: { 'x-skip-error-toast': '1' } },
       )
       .then(({ data }) => setSetup(data))
@@ -58,8 +53,6 @@ export default function MfaSetupPage() {
         if (controller.signal.aborted) return
         const apiErr = getApiError(err)
         if (apiErr.includes('already enabled')) {
-          // Enrollment completed in a prior attempt but session got stuck.
-          // Switch to the verify flow so the user can complete login.
           authStore.transitionToMfaVerify()
           navigate('/mfa/verify', { replace: true })
           return
@@ -76,7 +69,10 @@ export default function MfaSetupPage() {
       })
 
     return () => controller.abort()
-  }, [navigate])
+  }, [navigate, pending])
+
+  // Render nothing while the redirect fires — avoids a flash of the empty form.
+  if (!pending) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

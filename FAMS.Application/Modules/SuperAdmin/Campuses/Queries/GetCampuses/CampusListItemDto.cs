@@ -2,6 +2,7 @@ namespace FAMS.Application.Modules.SuperAdmin.Campuses.Queries.GetCampuses;
 
 public record CampusListItemDto(
     Guid Id,
+    Guid SchoolId,
     string Name,
     string Code,
     string City,

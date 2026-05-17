@@ -58,6 +58,7 @@ try
         app.UseHttpsRedirection();
     }
 
+    app.UseResponseCompression();
     app.UseMiddleware<GlobalExceptionMiddleware>();
     app.UseSerilogRequestLogging();
     app.UseHttpMetrics();

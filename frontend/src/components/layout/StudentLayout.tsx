@@ -12,12 +12,25 @@ const theme: PortalTheme = {
 }
 
 const navItems: PortalNavItem[] = [
-  { to: '/student/dashboard',  label: 'Dashboard',  icon: '🏠' },
-  { to: '/student/timetable',  label: 'Timetable',  icon: '🗓️' },
-  { to: '/student/attendance', label: 'Attendance', icon: '📅' },
-  { to: '/student/results',    label: 'Results',    icon: '📊' },
-  { to: '/student/fee',        label: 'Fee',        icon: '💰' },
-  { to: '/student/documents',  label: 'Documents',  icon: '📄' },
+  { to: '/student/dashboard', label: 'Dashboard', icon: '🏠' },
+  {
+    label: 'Academic',
+    icon: '📚',
+    defaultOpen: true,
+    children: [
+      { to: '/student/timetable',  label: 'Timetable',  icon: '🗓️' },
+      { to: '/student/attendance', label: 'Attendance', icon: '📅' },
+      { to: '/student/results',    label: 'Results',    icon: '📊' },
+    ],
+  },
+  {
+    label: 'Finance',
+    icon: '💰',
+    children: [
+      { to: '/student/fee', label: 'Fee', icon: '💳' },
+    ],
+  },
+  { to: '/student/documents', label: 'Documents', icon: '📄' },
 ]
 
 export default function StudentLayout() {

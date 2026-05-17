@@ -7,7 +7,15 @@ type Props = {
 }
 
 export default function ProtectedRoute({ children, roles }: Props) {
-  if (!authStore.isAuthenticated()) return <Navigate to="/login" replace />
+  const phase = authStore.getAuthPhase()
+
+  if (phase === 'mfa_pending') {
+    const p = authStore.getPendingMfa()!
+    return <Navigate to={p.mfaEnrollmentRequired ? '/mfa/setup' : '/mfa/verify'} replace />
+  }
+
+  if (phase === 'anonymous') return <Navigate to="/login" replace />
+
   if (roles && roles.length > 0 && !roles.some((r) => authStore.hasRole(r))) {
     return <Navigate to="/unauthorized" replace />
   }

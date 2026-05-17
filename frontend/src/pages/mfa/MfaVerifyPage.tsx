@@ -16,25 +16,23 @@ type LoginResponse = AuthSessionPayload & {
 
 export default function MfaVerifyPage() {
   const navigate = useNavigate()
-  const [pending, setPending] = useState<PendingMfaState | null>(null)
+  // Lazy init: read pending state synchronously so the email is present on the
+  // very first render. Only accept state that doesn't need enrollment.
+  const [pending] = useState<PendingMfaState | null>(() => {
+    const p = authStore.getPendingMfa()
+    return p && !p.mfaEnrollmentRequired ? p : null
+  })
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    const current = authStore.getPendingMfa()
-    if (!current) {
-      navigate('/login', { replace: true })
-      return
+    if (!pending) {
+      const current = authStore.getPendingMfa()
+      // mfaEnrollmentRequired means they should be on the setup page, not here.
+      navigate(current?.mfaEnrollmentRequired ? '/mfa/setup' : '/login', { replace: true })
     }
-
-    if (current.mfaEnrollmentRequired) {
-      navigate('/mfa/setup', { replace: true })
-      return
-    }
-
-    setPending(current)
-  }, [navigate])
+  }, [navigate, pending])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +65,9 @@ export default function MfaVerifyPage() {
     authStore.clearPendingMfa()
     navigate('/login', { replace: true })
   }
+
+  // Render nothing while the redirect fires — avoids a flash of the empty form.
+  if (!pending) return null
 
   return (
     <div className="min-h-screen bg-primary-700 flex items-center justify-center p-4">

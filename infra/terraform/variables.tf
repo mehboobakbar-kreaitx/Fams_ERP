@@ -15,3 +15,9 @@ variable "fams_api_image" {
   type        = string
   default     = "ghcr.io/your-org/fams-api:latest"
 }
+
+variable "fams_gateway_image" {
+  description = "FAMS Gateway Docker image with tag"
+  type        = string
+  default     = "ghcr.io/your-org/fams-gateway:latest"
+}

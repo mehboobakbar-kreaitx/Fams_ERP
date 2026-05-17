@@ -145,6 +145,12 @@ export const authStore = {
     this.setState({ ...state, token: accessToken, refreshToken })
   },
 
+  getAuthPhase(): 'anonymous' | 'mfa_pending' | 'authenticated' {
+    if (this.isAuthenticated()) return 'authenticated'
+    if (this.getPendingMfa() !== null) return 'mfa_pending'
+    return 'anonymous'
+  },
+
   isAuthenticated(): boolean {
     return !!this.getState().token
   },

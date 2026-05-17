@@ -12,12 +12,26 @@ const theme: PortalTheme = {
 }
 
 const navItems: PortalNavItem[] = [
-  { to: '/teacher/dashboard',  label: 'Dashboard',       icon: '🏠' },
-  { to: '/teacher/schedule',   label: 'My Schedule',     icon: '🗓️' },
-  { to: '/teacher/attendance', label: 'Mark Attendance', icon: '✅' },
-  { to: '/teacher/students',   label: 'My Students',     icon: '👥' },
-  { to: '/teacher/marks',      label: 'Enter Marks',     icon: '📊' },
-  { to: '/teacher/leave',      label: 'Apply Leave',     icon: '🌴' },
+  { to: '/teacher/dashboard', label: 'Dashboard', icon: '🏠' },
+  {
+    label: 'Academic Management',
+    icon: '📚',
+    defaultOpen: true,
+    children: [
+      { to: '/teacher/schedule',   label: 'My Schedule',     icon: '🗓️' },
+      { to: '/teacher/attendance', label: 'Mark Attendance', icon: '✅' },
+      { to: '/teacher/students',   label: 'My Students',     icon: '👥' },
+      { to: '/teacher/marks',      label: 'Enter Marks',     icon: '📊' },
+      { to: '/teacher/exams',      label: 'Exam Schedule',   icon: '📝' },
+    ],
+  },
+  {
+    label: 'HR & Leave',
+    icon: '🌴',
+    children: [
+      { to: '/teacher/leave', label: 'Apply Leave', icon: '🌴' },
+    ],
+  },
 ]
 
 export default function TeacherLayout() {
