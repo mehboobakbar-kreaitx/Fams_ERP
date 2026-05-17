@@ -69,6 +69,7 @@ public static class DependencyInjection
         services.AddHangfireServer();
 
         services.AddHttpClient("Anthropic");
+        services.AddHttpClient("LMS");
 
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ISmsService, SmsService>();
@@ -79,6 +80,8 @@ public static class DependencyInjection
         services.AddSingleton<IMfaQrCodeService, MfaQrCodeService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IPdfService, PdfService>();
+        services.AddScoped<IJazzCashService, JazzCashService>();
+        services.AddScoped<ILmsService, LmsService>();
 
         return services;
     }

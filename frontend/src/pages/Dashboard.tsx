@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { authStore } from '../store/authStore'
@@ -33,9 +34,32 @@ const modules = [
   { to: '/hrm', label: 'HRM', icon: '🏢', description: 'Staff & payroll' },
 ]
 
+function useExport(format: 'pdf' | 'xlsx') {
+  const [loading, setLoading] = useState(false)
+  const trigger = async () => {
+    setLoading(true)
+    try {
+      const res = await axiosClient.get(`/dashboard/principal/export.${format}`, {
+        responseType: 'blob',
+      })
+      const url = URL.createObjectURL(res.data as Blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dashboard-${new Date().toISOString().slice(0, 10)}.${format}`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setLoading(false)
+    }
+  }
+  return { loading, trigger }
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = authStore.getState()
+  const xlsxExport = useExport('xlsx')
+  const pdfExport = useExport('pdf')
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard-principal'],
@@ -70,7 +94,25 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-gray-900">Welcome back, {user?.firstName || 'User'}!</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-2xl font-semibold text-gray-900">Welcome back, {user?.firstName || 'User'}!</h2>
+        <div className="flex gap-2">
+          <button
+            onClick={xlsxExport.trigger}
+            disabled={xlsxExport.loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+          >
+            {xlsxExport.loading ? 'Exporting…' : '⬇ Excel'}
+          </button>
+          <button
+            onClick={pdfExport.trigger}
+            disabled={pdfExport.loading}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-white text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+          >
+            {pdfExport.loading ? 'Exporting…' : '⬇ PDF'}
+          </button>
+        </div>
+      </div>
       <p className="text-sm text-muted-foreground mb-6">Here is what is happening across your campus today.</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

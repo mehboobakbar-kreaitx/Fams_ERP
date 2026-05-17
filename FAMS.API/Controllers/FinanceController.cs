@@ -8,6 +8,7 @@ using FAMS.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace FAMS.API.Controllers;
 
@@ -84,9 +85,52 @@ public class FinanceController : ControllerBase
         var bytes = await pdf.GenerateFeeReceiptAsync(paymentId, ct);
         return File(bytes, "application/pdf", $"fee-receipt-{paymentId}.pdf");
     }
+
+    // ── JazzCash ──────────────────────────────────────────────────────────────
+
+    [HttpPost("jazzcash/initiate")]
+    [Authorize(Roles = "SystemAdmin,Principal,Accountant,Student,Parent")]
+    public async Task<IActionResult> JazzCashInitiate(
+        [FromBody] JazzCashInitiateBody body,
+        [FromServices] IJazzCashService jazzcash,
+        CancellationToken ct)
+    {
+        var txnRef = $"FAMS-{Guid.NewGuid():N}"[..20];
+        var returnUrl = $"{Request.Scheme}://{Request.Host}/api/v1/finance/jazzcash/callback";
+
+        var result = await jazzcash.InitiatePaymentAsync(new(
+            txnRef, body.Amount, body.Description, returnUrl,
+            body.CustomerEmail, body.CustomerMobile), ct);
+
+        return Ok(new { txnRefNo = txnRef, paymentUrl = result.PaymentUrl, formFields = result.FormFields });
+    }
+
+    [HttpPost("jazzcash/callback")]
+    [AllowAnonymous]
+    public IActionResult JazzCashCallback(
+        [FromForm] IFormCollection form,
+        [FromServices] IJazzCashService jazzcash,
+        [FromServices] ILogger<FinanceController> log)
+    {
+        var fields = form.ToDictionary(kv => kv.Key, kv => kv.Value.ToString());
+
+        if (!jazzcash.VerifyWebhookSignature(fields))
+        {
+            log.LogWarning("JazzCash callback HMAC verification failed");
+            return BadRequest(new { error = "Invalid signature" });
+        }
+
+        fields.TryGetValue("pp_ResponseCode", out var responseCode);
+        fields.TryGetValue("pp_TxnRefNo", out var txnRef);
+        log.LogInformation("JazzCash callback: TxnRef={TxnRef} ResponseCode={Code}", txnRef, responseCode);
+
+        // 000 = success; caller should reconcile against their invoice
+        return Ok(new { txnRefNo = txnRef, responseCode, success = responseCode == "000" });
+    }
 }
 
 public record GenerateInvoicesBody(string TermName, DateTime DueDate, decimal DefaultTermFee);
 public record RecordPaymentBody(Guid InvoiceId, decimal Amount, string PaymentMethod, string? TransactionId);
 public record ApplyLateFeeBody(decimal LateFeeAmount, bool IsPercentage);
+public record JazzCashInitiateBody(decimal Amount, string Description, string? CustomerEmail, string? CustomerMobile);
 

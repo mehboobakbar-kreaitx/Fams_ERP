@@ -1,4 +1,6 @@
-﻿using FAMS.Application.Common.Interfaces;
+﻿using ClosedXML.Excel;
+using FAMS.Application.Common.Interfaces;
+using FAMS.Application.Modules.CRM.Commands.BulkImportStudents;
 using FAMS.Application.Modules.CRM.Commands.CreateStudent;
 using FAMS.Application.Modules.CRM.Commands.DeleteStudent;
 using FAMS.Application.Modules.CRM.Commands.UpdateStudent;
@@ -87,6 +89,103 @@ public class StudentsController : ControllerBase
     {
         var result = await _mediator.Send(new GetStudentDocumentsQuery(id));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
+    }
+
+    // ── Bulk Import ──────────────────────────────────────────────────────────
+
+    [HttpGet("import-template")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
+    public IActionResult ImportTemplate()
+    {
+        using var wb = new XLWorkbook();
+        var ws = wb.Worksheets.Add("Students");
+        var headers = new[]
+        {
+            "FirstName*", "LastName*", "FatherName*", "DateOfBirth* (yyyy-MM-dd)",
+            "Gender* (Male/Female/Other)", "RollNumber*", "Phone*", "Address*",
+            "ProgramId* (GUID)", "ClassId* (GUID)", "SectionId* (GUID)",
+            "EmergencyContactName*", "EmergencyContactPhone*", "Email"
+        };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            ws.Cell(1, i + 1).Value = headers[i];
+            ws.Cell(1, i + 1).Style.Font.Bold = true;
+        }
+        ws.Columns().AdjustToContents();
+
+        using var stream = new MemoryStream();
+        wb.SaveAs(stream);
+        stream.Position = 0;
+        return File(stream.ToArray(),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "students-import-template.xlsx");
+    }
+
+    [HttpPost("import")]
+    [Consumes("multipart/form-data")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
+    public async Task<IActionResult> BulkImport(IFormFile file, CancellationToken ct)
+    {
+        if (_currentUser.CampusId is null) return Forbid();
+        if (file is null || file.Length == 0) return BadRequest(new { error = "No file provided." });
+
+        var parseErrors = new List<string>();
+        var rows = new List<StudentImportRow>();
+
+        using var stream = file.OpenReadStream();
+        using var wb = new XLWorkbook(stream);
+        var ws = wb.Worksheet(1);
+        var dataRows = ws.RangeUsed()?.RowsUsed().Skip(1).ToList() ?? [];
+
+        foreach (var row in dataRows)
+        {
+            var n = row.RowNumber();
+            var firstName   = row.Cell(1).GetString().Trim();
+            var lastName    = row.Cell(2).GetString().Trim();
+            var fatherName  = row.Cell(3).GetString().Trim();
+            var dobRaw      = row.Cell(4).GetString().Trim();
+            var genderRaw   = row.Cell(5).GetString().Trim();
+            var rollNumber  = row.Cell(6).GetString().Trim();
+            var phone       = row.Cell(7).GetString().Trim();
+            var address     = row.Cell(8).GetString().Trim();
+            var programIdRaw = row.Cell(9).GetString().Trim();
+            var classIdRaw  = row.Cell(10).GetString().Trim();
+            var sectionIdRaw = row.Cell(11).GetString().Trim();
+            var emergName   = row.Cell(12).GetString().Trim();
+            var emergPhone  = row.Cell(13).GetString().Trim();
+            var email       = row.Cell(14).GetString().Trim();
+
+            if (!DateTime.TryParse(dobRaw, out var dob))
+            { parseErrors.Add($"Row {n}: Invalid DateOfBirth '{dobRaw}'."); continue; }
+
+            if (!Enum.TryParse<Gender>(genderRaw, ignoreCase: true, out var gender))
+            { parseErrors.Add($"Row {n}: Invalid Gender '{genderRaw}'. Use Male/Female/Other."); continue; }
+
+            if (!Guid.TryParse(programIdRaw, out var programId) ||
+                !Guid.TryParse(classIdRaw, out var classId) ||
+                !Guid.TryParse(sectionIdRaw, out var sectionId))
+            { parseErrors.Add($"Row {n}: ProgramId/ClassId/SectionId must be valid GUIDs."); continue; }
+
+            rows.Add(new StudentImportRow(firstName, lastName, fatherName, dob, gender,
+                rollNumber, phone, address, programId, classId, sectionId,
+                emergName, emergPhone, string.IsNullOrWhiteSpace(email) ? null : email));
+        }
+
+        if (parseErrors.Count > 0 && rows.Count == 0)
+            return BadRequest(new { parseErrors });
+
+        var result = await _mediator.Send(
+            new BulkImportStudentsCommand(_currentUser.CampusId.Value, rows), ct);
+
+        if (!result.IsSuccess) return BadRequest(result);
+
+        var value = result.Value!;
+        return Ok(new
+        {
+            value.Imported,
+            value.Skipped,
+            Errors = parseErrors.Concat(value.Errors).ToList()
+        });
     }
 
     [HttpPost("{id:guid}/documents")]
