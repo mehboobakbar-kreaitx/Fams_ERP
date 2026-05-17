@@ -8,17 +8,19 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1'
 const SKIP_HEADER = 'x-skip-error-toast'
 
 function pickDetail(err: AxiosError): string {
-  const data = err.response?.data
-  if (typeof data === 'string') return data
+  const raw = err.response?.data
+  if (typeof raw === 'string') return raw
+  const data = raw as Record<string, unknown>
   if (data?.error) return String(data.error)
   if (data?.detail) return String(data.detail)
   if (data?.title) return String(data.title)
-  if (Array.isArray(data?.errors)) return data.errors.join(', ')
+  if (Array.isArray(data?.errors)) return (data.errors as unknown[]).join(', ')
   if (data?.errors && typeof data.errors === 'object') {
     const flat: string[] = []
-    for (const k of Object.keys(data.errors)) {
-      const v = data.errors[k]
-      if (Array.isArray(v)) flat.push(...v.map((m: string) => `${k}: ${m}`))
+    const errMap = data.errors as Record<string, unknown>
+    for (const k of Object.keys(errMap)) {
+      const v = errMap[k]
+      if (Array.isArray(v)) flat.push(...v.map((m) => `${k}: ${m}`))
     }
     if (flat.length) return flat.join(' • ')
   }
