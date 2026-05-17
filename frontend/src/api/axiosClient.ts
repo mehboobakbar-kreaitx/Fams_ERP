@@ -112,3 +112,17 @@ axiosClient.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+// When another tab silently refreshes the access token, localStorage fires a
+// 'storage' event in every *other* tab. Sync the default Authorization header
+// here so that the next request from this tab uses the new token without
+// triggering its own redundant refresh (which would fail — RT already rotated).
+window.addEventListener('storage', (event) => {
+  if (event.key !== 'access_token') return
+  if (event.newValue) {
+    axiosClient.defaults.headers.common.Authorization = `Bearer ${event.newValue}`
+  } else {
+    // Another tab cleared the token (logout) — mirror that state immediately.
+    delete axiosClient.defaults.headers.common.Authorization
+  }
+})

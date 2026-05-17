@@ -122,10 +122,13 @@ public class HRMController : ControllerBase
         if (_currentUser.CampusId is null) return Forbid();
 
         // Non-admin staff may only view their own leave requests.
+        // Explicitly passing another user's staffId returns 403 rather than silently
+        // overriding it — clearer security signal and easier to audit.
         var isAdminRole = _currentUser.Roles.Any(r => r is "SystemAdmin" or "Principal" or "HrOfficer");
         if (!isAdminRole)
         {
             if (!Guid.TryParse(_currentUser.UserId, out var selfId)) return Forbid();
+            if (staffId.HasValue && staffId.Value != selfId) return Forbid();
             staffId = selfId;
         }
 
