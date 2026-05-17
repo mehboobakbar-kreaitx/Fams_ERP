@@ -45,10 +45,11 @@ docker compose up -d
 | Grafana | http://localhost:3001 |
 | Prometheus | http://localhost:9090 |
 
-**Default admin credentials:**
-- Email: `admin@fams.local`
-- Password: `Admin@12345!`
-- Change immediately after first login.
+**Default superadmin credentials (development only):**
+- Email: `superadmin@fams.io`
+- Password: `SuperAdmin@2026!`
+
+> ⚠️ Change these credentials before any staging or production deployment.
 
 ---
 
