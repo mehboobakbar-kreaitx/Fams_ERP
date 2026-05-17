@@ -1,5 +1,6 @@
 import axios, { type AxiosError } from 'axios'
 import toast from 'react-hot-toast'
+import { authStore } from '../store/authStore'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1'
 
@@ -64,25 +65,31 @@ axiosClient.interceptors.response.use(
       originalRequest._retry = true
       isRefreshing = true
 
+      const accessToken = localStorage.getItem('access_token')
       const refreshToken = localStorage.getItem('refresh_token')
-      if (!refreshToken) {
-        localStorage.clear()
+      if (!accessToken || !refreshToken) {
+        authStore.clear()
         window.location.href = '/login'
         return Promise.reject(error)
       }
 
       try {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken })
-        const newAccessToken = data.accessToken ?? data.token
-        const newRefreshToken = data.refreshToken
-        localStorage.setItem('access_token', newAccessToken)
-        if (newRefreshToken) localStorage.setItem('refresh_token', newRefreshToken)
+        // Backend RefreshTokenCommand requires both tokens:
+        // accessToken — to validate the expired JWT and extract userId
+        // refreshToken — to verify against the stored DB value
+        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, {
+          accessToken,
+          refreshToken,
+        })
+        const newAccessToken: string = data.accessToken
+        const newRefreshToken: string = data.refreshToken
+        authStore.updateTokens(newAccessToken, newRefreshToken)
         axiosClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`
         processQueue(null, newAccessToken)
         return axiosClient(originalRequest)
       } catch (refreshError) {
         processQueue(refreshError, null)
-        localStorage.clear()
+        authStore.clear()
         window.location.href = '/login'
         return Promise.reject(refreshError)
       } finally {

@@ -127,6 +127,14 @@ export const authStore = {
     this.clearPendingMfa()
   },
 
+  // Called by the Axios interceptor after a silent token refresh.
+  // Updates tokens in both the flat keys and the fams_auth composite so all
+  // readers stay consistent without requiring a full re-login.
+  updateTokens(accessToken: string, refreshToken: string) {
+    const state = this.getState()
+    this.setState({ ...state, token: accessToken, refreshToken })
+  },
+
   isAuthenticated(): boolean {
     return !!this.getState().token
   },
