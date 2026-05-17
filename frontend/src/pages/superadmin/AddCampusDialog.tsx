@@ -1,12 +1,15 @@
 import { useState } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { axiosClient } from '../../api/axiosClient'
 import Modal from '../../components/ui/Modal'
 
 type Props = { open: boolean; onClose: () => void }
 
+type School = { id: string; name: string; code: string }
+
 type FormState = {
+  schoolId: string
   name: string
   code: string
   city: string
@@ -19,6 +22,7 @@ type FormState = {
 }
 
 const empty: FormState = {
+  schoolId: '',
   name: '',
   code: '',
   city: '',
@@ -34,9 +38,21 @@ export default function AddCampusDialog({ open, onClose }: Props) {
   const qc = useQueryClient()
   const [form, setForm] = useState<FormState>(empty)
 
+  const schools = useQuery({
+    queryKey: ['schools-list-for-campus'],
+    queryFn: async () => {
+      const res = await axiosClient.get<{ items: School[] } | School[]>('/schools', {
+        params: { pageSize: 500 },
+      })
+      return Array.isArray(res.data) ? res.data : res.data.items ?? []
+    },
+    staleTime: 60_000,
+  })
+
   const create = useMutation({
     mutationFn: async () => {
       const payload = {
+        schoolId: form.schoolId,
         name: form.name.trim(),
         code: form.code.trim().toUpperCase(),
         city: form.city.trim(),
@@ -67,6 +83,7 @@ export default function AddCampusDialog({ open, onClose }: Props) {
   })
 
   const canSubmit =
+    form.schoolId &&
     form.name.trim() &&
     form.code.trim() &&
     form.city.trim() &&
@@ -114,6 +131,19 @@ export default function AddCampusDialog({ open, onClose }: Props) {
         }}
         className="grid grid-cols-1 md:grid-cols-2 gap-3"
       >
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-700 mb-1">School *</label>
+          <select
+            value={form.schoolId}
+            onChange={(e) => setForm({ ...form, schoolId: e.target.value })}
+            className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">— select a school —</option>
+            {(schools.data ?? []).map((s) => (
+              <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+            ))}
+          </select>
+        </div>
         <Field label="Campus Name *" value={form.name} onChange={(v) => setForm({ ...form, name: v })} placeholder="Falcon College — …" className="md:col-span-2" />
         <Field label="Code *" value={form.code} onChange={(v) => setForm({ ...form, code: v.toUpperCase() })} placeholder="FC-32" />
         <Field label="City *" value={form.city} onChange={(v) => setForm({ ...form, city: v })} placeholder="e.g. Karachi" />

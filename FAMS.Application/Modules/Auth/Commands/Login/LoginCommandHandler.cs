@@ -33,7 +33,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
         {
             var enrollDto = new LoginDto(string.Empty, string.Empty, DateTime.MinValue,
                 user.Id, user.Roles, user.CampusId, user.SchoolId, $"{user.FirstName} {user.LastName}",
-                MfaRequired: true, MfaEnrollmentRequired: true);
+                MfaRequired: true,
+                MfaEnrollmentRequired: true,
+                MfaChallengeToken: _jwt.GenerateMfaChallengeToken(user.Id, user.Email));
             return Result<LoginDto>.Success(enrollDto);
         }
 
@@ -43,7 +45,9 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<LoginDto
             {
                 var pendingDto = new LoginDto(string.Empty, string.Empty, DateTime.MinValue,
                     user.Id, user.Roles, user.CampusId, user.SchoolId, $"{user.FirstName} {user.LastName}",
-                    MfaRequired: true, MfaEnrollmentRequired: false);
+                    MfaRequired: true,
+                    MfaEnrollmentRequired: false,
+                    MfaChallengeToken: _jwt.GenerateMfaChallengeToken(user.Id, user.Email));
                 return Result<LoginDto>.Success(pendingDto);
             }
 

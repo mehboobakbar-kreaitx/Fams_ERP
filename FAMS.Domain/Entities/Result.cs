@@ -38,9 +38,23 @@ public class Result : BaseAuditableEntity
         };
     }
 
+    public void UpdateMarks(decimal marksObtained, decimal totalMarks, string? grade, string? remarks)
+    {
+        MarksObtained = marksObtained;
+        TotalMarks = totalMarks;
+        Grade = grade;
+        Remarks = remarks;
+    }
+
     public void Publish()
     {
         IsPublished = true;
         PublishedAt = DateTime.UtcNow;
+    }
+
+    public void Unpublish()
+    {
+        IsPublished = false;
+        PublishedAt = null;
     }
 }

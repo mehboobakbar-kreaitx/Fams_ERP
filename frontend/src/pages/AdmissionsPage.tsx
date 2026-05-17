@@ -6,29 +6,25 @@ import { formatDate } from '../lib/utils'
 
 type Application = {
   id: string
-  applicationNumber: string
   candidateName: string
   programName: string
   submittedOn: string
-  status: 'Submitted' | 'UnderReview' | 'Shortlisted' | 'Accepted' | 'Rejected' | 'Enrolled'
+  status: string
   score?: number
+  rank?: number
 }
 
-type Funnel = {
-  submitted: number
-  underReview: number
-  shortlisted: number
-  accepted: number
-  enrolled: number
-}
+type FunnelStage = { name: string; count: number; conversionRate: number }
+type Funnel = { stages: FunnelStage[]; overallConversion: number }
 
-const stages: { label: string; key: keyof Funnel; color: string }[] = [
-  { label: 'Submitted', key: 'submitted', color: 'bg-gray-100 text-gray-700' },
-  { label: 'Under Review', key: 'underReview', color: 'bg-blue-100 text-blue-700' },
-  { label: 'Shortlisted', key: 'shortlisted', color: 'bg-amber-100 text-amber-700' },
-  { label: 'Accepted', key: 'accepted', color: 'bg-emerald-100 text-emerald-700' },
-  { label: 'Enrolled', key: 'enrolled', color: 'bg-primary-100 text-primary-700' },
-]
+const STAGE_NAMES = ['Inquiry', 'Applied', 'UnderReview', 'Offered', 'Enrolled']
+const STAGE_LABELS: Record<string, string> = {
+  Inquiry: 'Inquiry',
+  Applied: 'Submitted',
+  UnderReview: 'Under Review',
+  Offered: 'Offered',
+  Enrolled: 'Enrolled',
+}
 
 export default function AdmissionsPage() {
   const funnelQuery = useQuery({
@@ -39,6 +35,10 @@ export default function AdmissionsPage() {
     },
   })
 
+  const funnelStageMap = Object.fromEntries(
+    (funnelQuery.data?.stages ?? []).map((s) => [s.name, s.count])
+  )
+
   const appsQuery = useQuery({
     queryKey: ['admissions-applications'],
     queryFn: async () => {
@@ -48,7 +48,7 @@ export default function AdmissionsPage() {
   })
 
   const columns: Column<Application>[] = [
-    { key: 'applicationNumber', header: 'App #', width: '120px' },
+    { key: 'id', header: 'App #', width: '120px', render: (r) => r.id.slice(0, 8).toUpperCase() },
     { key: 'candidateName', header: 'Candidate', render: (r) => <span className="font-medium">{r.candidateName}</span> },
     { key: 'programName', header: 'Program' },
     {
@@ -74,8 +74,8 @@ export default function AdmissionsPage() {
       <p className="text-sm text-muted-foreground mb-6">Application pipeline and merit list management.</p>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-        {stages.map((s) => (
-          <KpiCard key={s.key} label={s.label} value={funnelQuery.data?.[s.key] ?? 0} />
+        {STAGE_NAMES.map((name) => (
+          <KpiCard key={name} label={STAGE_LABELS[name] ?? name} value={funnelStageMap[name] ?? 0} />
         ))}
       </div>
 
@@ -86,7 +86,7 @@ export default function AdmissionsPage() {
           columns={columns}
           data={appsQuery.data ?? []}
           rowKey={(r) => r.id}
-          searchableFields={['candidateName', 'applicationNumber', 'programName']}
+          searchableFields={['candidateName', 'programName']}
           pageSize={15}
           emptyMessage="No applications submitted yet."
         />

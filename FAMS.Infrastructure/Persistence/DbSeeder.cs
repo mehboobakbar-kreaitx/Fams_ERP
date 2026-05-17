@@ -47,9 +47,12 @@ public static class DbSeeder
         const string email    = "superadmin@fams.io";
         const string password = "SuperAdmin@2026!";
 
-        if (await userManager.FindByEmailAsync(email) is not null)
+        var existing = await userManager.FindByEmailAsync(email);
+        if (existing is not null)
         {
-            logger.LogInformation("Super admin already exists — skipping.");
+            var token = await userManager.GeneratePasswordResetTokenAsync(existing);
+            await userManager.ResetPasswordAsync(existing, token, password);
+            logger.LogInformation("Super admin already exists — password reset to seeded value.");
             return;
         }
 

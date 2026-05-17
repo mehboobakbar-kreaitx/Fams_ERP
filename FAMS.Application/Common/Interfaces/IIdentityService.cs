@@ -14,6 +14,7 @@ public interface IIdentityService
     Task UpdateLastLoginAsync(string userId);
     Task<(bool Succeeded, string? Error)> ChangePasswordAsync(string userId, string oldPassword, string newPassword);
     Task<string> GetOrCreateAuthenticatorKeyAsync(string userId);
+    Task<string> ResetAuthenticatorKeyAsync(string userId);
     Task<bool> EnableTwoFactorAsync(string userId, string code);
     Task<(bool Succeeded, string? Error)> ResetPasswordAsync(string email, string token, string newPassword);
     Task<string> GeneratePasswordResetTokenAsync(string email);

@@ -1,6 +1,7 @@
 ﻿using FAMS.Application.Common.Interfaces;
 using FAMS.Application.Modules.Results.Commands.EnterMarks;
 using FAMS.Application.Modules.Results.Commands.PublishResults;
+using FAMS.Application.Modules.Results.Commands.UnpublishResults;
 using FAMS.Application.Modules.Results.Queries.GetResultsAnalytics;
 using FAMS.Application.Modules.Results.Queries.GetStudentResults;
 using MediatR;
@@ -15,8 +16,13 @@ namespace FAMS.API.Controllers;
 public class ResultsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ICurrentUserService _currentUser;
 
-    public ResultsController(IMediator mediator) => _mediator = mediator;
+    public ResultsController(IMediator mediator, ICurrentUserService currentUser)
+    {
+        _mediator = mediator;
+        _currentUser = currentUser;
+    }
 
     [HttpPost("marks")]
     [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator,Teacher")]
@@ -28,10 +34,19 @@ public class ResultsController : ControllerBase
 
     [HttpPost("publish")]
     [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
-    public async Task<IActionResult> Publish([FromBody] PublishResultsCommand command)
+    public async Task<IActionResult> Publish([FromBody] PublishResultsBody body)
+    {
+        var campusId = _currentUser.CampusId;
+        var result = await _mediator.Send(new PublishResultsCommand(body.SubjectId, body.ExamType, body.TermName, campusId));
+        return result.IsSuccess ? Ok(new { published = result.Value }) : BadRequest(result);
+    }
+
+    [HttpPost("unpublish")]
+    [Authorize(Roles = "SystemAdmin,Principal")]
+    public async Task<IActionResult> Unpublish([FromBody] UnpublishResultsCommand command)
     {
         var result = await _mediator.Send(command);
-        return result.IsSuccess ? Ok(new { published = result.Value }) : BadRequest(result);
+        return result.IsSuccess ? Ok(new { unpublished = result.Value }) : BadRequest(result);
     }
 
     [HttpGet("student/{studentId:guid}")]
@@ -41,6 +56,11 @@ public class ResultsController : ControllerBase
         [FromQuery] string? examType = null,
         [FromQuery] bool publishedOnly = true)
     {
+        // Students may only fetch their own results; staff roles may fetch any student's.
+        if (_currentUser.Roles.Contains("Student") &&
+            _currentUser.UserId != studentId.ToString())
+            return Forbid();
+
         var result = await _mediator.Send(new GetStudentResultsQuery(studentId, termName, examType, publishedOnly));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
     }
@@ -61,8 +81,14 @@ public class ResultsController : ControllerBase
     public async Task<IActionResult> GradeCardPdf(Guid studentId, [FromQuery] string termName,
         [FromServices] IPdfService pdf, CancellationToken ct)
     {
+        if (_currentUser.Roles.Contains("Student") &&
+            _currentUser.UserId != studentId.ToString())
+            return Forbid();
+
         var bytes = await pdf.GenerateGradeCardAsync(studentId, termName, ct);
         return File(bytes, "application/pdf", $"grade-card-{studentId}-{termName}.pdf");
     }
 }
+
+public record PublishResultsBody(Guid SubjectId, string ExamType, string TermName);
 

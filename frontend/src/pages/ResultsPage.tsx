@@ -7,20 +7,21 @@ import DataTable, { type Column } from '../components/ui/DataTable'
 type ResultRow = {
   id: string
   subjectName: string
-  obtainedMarks: number
+  marksObtained: number
   totalMarks: number
+  percentage: number
   grade: string
-  examName: string
+  examType: string
   termName?: string
 }
 
 type Analytics = {
-  averageMarks: number
+  averagePercentage: number
   passCount: number
   failCount: number
-  passRate: number
-  highestMarks: number
-  lowestMarks: number
+  passPercentage: number
+  highestPercentage: number
+  lowestPercentage: number
 }
 
 type AnalyticsFilters = {
@@ -53,12 +54,12 @@ export default function ResultsPage() {
   })
 
   const columns: Column<ResultRow>[] = [
-    { key: 'examName', header: 'Exam' },
+    { key: 'examType', header: 'Exam' },
     { key: 'subjectName', header: 'Subject' },
     {
-      key: 'obtainedMarks',
+      key: 'marksObtained',
       header: 'Marks',
-      render: (r) => `${r.obtainedMarks} / ${r.totalMarks}`,
+      render: (r) => `${r.marksObtained} / ${r.totalMarks}`,
     },
     {
       key: 'grade',
@@ -101,15 +102,15 @@ export default function ResultsPage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <KpiCard label="Average" value={analytics.data?.averageMarks?.toFixed(1) ?? '—'} icon="📈" />
+        <KpiCard label="Average %" value={analytics.data ? `${analytics.data.averagePercentage.toFixed(1)}%` : '—'} icon="📈" />
         <KpiCard
           label="Pass Rate"
-          value={analytics.data ? `${(analytics.data.passRate ?? 0).toFixed(1)}%` : '—'}
+          value={analytics.data ? `${analytics.data.passPercentage.toFixed(1)}%` : '—'}
           trend="up"
           icon="✅"
         />
-        <KpiCard label="Highest" value={analytics.data?.highestMarks ?? '—'} icon="🏆" />
-        <KpiCard label="Lowest" value={analytics.data?.lowestMarks ?? '—'} trend="down" icon="⚠️" />
+        <KpiCard label="Highest %" value={analytics.data ? `${analytics.data.highestPercentage.toFixed(1)}%` : '—'} icon="🏆" />
+        <KpiCard label="Lowest %" value={analytics.data ? `${analytics.data.lowestPercentage.toFixed(1)}%` : '—'} trend="down" icon="⚠️" />
       </div>
 
       <div className="bg-white rounded-xl border border-border p-5">

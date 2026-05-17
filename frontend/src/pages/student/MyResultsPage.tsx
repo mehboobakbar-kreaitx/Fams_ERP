@@ -7,10 +7,11 @@ import DataTable, { type Column } from '../../components/ui/DataTable'
 type ResultRow = {
   id: string
   subjectName: string
-  obtainedMarks: number
+  marksObtained: number
   totalMarks: number
+  percentage: number
   grade: string
-  examName: string
+  examType: string
   termName?: string
 }
 
@@ -30,16 +31,16 @@ export default function MyResultsPage() {
   })
 
   const rows = results.data ?? []
-  const totalObtained = rows.reduce((sum, r) => sum + r.obtainedMarks, 0)
+  const totalObtained = rows.reduce((sum, r) => sum + r.marksObtained, 0)
   const totalMax = rows.reduce((sum, r) => sum + r.totalMarks, 0)
   const percentage = totalMax > 0 ? (totalObtained / totalMax) * 100 : 0
   const failed = rows.filter((r) => r.grade === 'F').length
 
   const columns: Column<ResultRow>[] = [
-    { key: 'examName', header: 'Exam' },
+    { key: 'examType', header: 'Exam' },
     { key: 'termName', header: 'Term' },
     { key: 'subjectName', header: 'Subject', render: (r) => <span className="font-medium">{r.subjectName}</span> },
-    { key: 'obtainedMarks', header: 'Marks', render: (r) => `${r.obtainedMarks} / ${r.totalMarks}` },
+    { key: 'marksObtained', header: 'Marks', render: (r) => `${r.marksObtained} / ${r.totalMarks}` },
     {
       key: 'grade',
       header: 'Grade',
@@ -73,7 +74,7 @@ export default function MyResultsPage() {
           columns={columns}
           data={rows}
           rowKey={(r) => r.id}
-          searchableFields={['subjectName', 'examName', 'termName']}
+          searchableFields={['subjectName', 'examType', 'termName']}
           pageSize={20}
           emptyMessage="No published results yet."
         />

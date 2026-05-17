@@ -30,8 +30,8 @@ public class CreateCampusCommandHandler : IRequestHandler<CreateCampusCommand, R
 
         // Resolve which school this campus belongs to.
         // School-scoped users (Principal during setup) carry SchoolId in their JWT.
-        // SystemAdmin passes SchoolId explicitly via the command (or it's inferred below).
-        var schoolId = _currentUser.SchoolId ?? Guid.Empty;
+        // SystemAdmin passes SchoolId explicitly via the command.
+        var schoolId = request.SchoolId ?? _currentUser.SchoolId ?? Guid.Empty;
         if (schoolId == Guid.Empty)
             return Result<Guid>.Failure("Cannot create a campus without an associated school.");
 

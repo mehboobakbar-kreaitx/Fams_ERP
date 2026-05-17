@@ -10,10 +10,10 @@ type ChildSummary = {
 type ResultRow = {
   id: string
   subjectName: string
-  obtainedMarks: number
+  marksObtained: number
   totalMarks: number
   grade: string
-  examName: string
+  examType: string
 }
 
 type ParentDashboardDto = { children: ChildSummary[] }
@@ -74,9 +74,9 @@ function ChildResultsBlock({ studentId, name }: { studentId: string; name: strin
           <tbody>
             {(results.data ?? []).map((r) => (
               <tr key={r.id} className="border-b border-border">
-                <td className="px-3 py-2">{r.examName}</td>
+                <td className="px-3 py-2">{r.examType}</td>
                 <td className="px-3 py-2">{r.subjectName}</td>
-                <td className="px-3 py-2">{r.obtainedMarks} / {r.totalMarks}</td>
+                <td className="px-3 py-2">{r.marksObtained} / {r.totalMarks}</td>
                 <td className="px-3 py-2 font-medium">{r.grade}</td>
               </tr>
             ))}

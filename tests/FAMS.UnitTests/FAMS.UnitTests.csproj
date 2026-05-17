@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\FAMS.Application\FAMS.Application.csproj" />
     <ProjectReference Include="..\..\FAMS.Domain\FAMS.Domain.csproj" />
+    <ProjectReference Include="..\..\FAMS.Infrastructure\FAMS.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,8 @@
 ﻿using FAMS.Application.Common.Interfaces;
 using FAMS.Application.Modules.Academic.Attendance.Commands.MarkAttendance;
 using FAMS.Application.Modules.Academic.Attendance.Queries.GetAttendanceReport;
+using FAMS.Application.Modules.Academic.Attendance.Queries.GetSectionAttendance;
+using FAMS.Application.Modules.Academic.Attendance.Queries.GetStudentAttendance;
 using FAMS.Application.Modules.Academic.Examinations.Commands.CreateExamSchedule;
 using FAMS.Application.Modules.Academic.Examinations.Commands.GenerateAdmitCards;
 using FAMS.Application.Modules.Academic.Examinations.Queries.GetExamSchedule;
@@ -40,13 +42,50 @@ public class AcademicController : ControllerBase
         return result.IsSuccess ? Ok(new { recorded = result.Value }) : BadRequest(result);
     }
 
+    [HttpGet("attendance")]
+    [Authorize(Roles = "SystemAdmin,Principal,Teacher,AcademicCoordinator")]
+    public async Task<IActionResult> GetSectionAttendance(
+        [FromQuery] Guid sectionId, [FromQuery] DateTime date)
+    {
+        var result = await _mediator.Send(new GetSectionAttendanceQuery(sectionId, date));
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
+    }
+
     [HttpGet("attendance/report")]
+    [Authorize(Roles = "SystemAdmin,Principal,Teacher,AcademicCoordinator")]
     public async Task<IActionResult> AttendanceReport(
         [FromQuery] Guid sectionId, [FromQuery] DateTime startDate, [FromQuery] DateTime endDate,
         [FromQuery] Guid? studentId = null)
     {
         var result = await _mediator.Send(new GetAttendanceReportQuery(sectionId, startDate, endDate, studentId));
         return Ok(result.Value);
+    }
+
+    [HttpGet("attendance/student/{studentId:guid}")]
+    public async Task<IActionResult> GetStudentAttendance(
+        Guid studentId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 30)
+    {
+        // Students may only fetch their own records; staff roles may fetch any.
+        if (_currentUser.Roles.Contains("Student") &&
+            _currentUser.UserId != studentId.ToString())
+            return Forbid();
+
+        var result = await _mediator.Send(new GetStudentAttendanceQuery(studentId, pageNumber, pageSize));
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
+    }
+
+    [HttpGet("attendance/student/{studentId:guid}/summary")]
+    public async Task<IActionResult> GetStudentAttendanceSummary(
+        Guid studentId,
+        [FromQuery] DateTime? startDate = null,
+        [FromQuery] DateTime? endDate = null)
+    {
+        if (_currentUser.Roles.Contains("Student") &&
+            _currentUser.UserId != studentId.ToString())
+            return Forbid();
+
+        var result = await _mediator.Send(new GetStudentAttendanceSummaryQuery(studentId, startDate, endDate));
+        return result.IsSuccess ? Ok(result.Value) : NotFound(result);
     }
 
     // ---------- Timetable ----------
@@ -61,11 +100,12 @@ public class AcademicController : ControllerBase
 
     [HttpGet("timetable")]
     public async Task<IActionResult> GetTimetable(
-        [FromQuery] string termName,
+        [FromQuery] string? termName = null,
         [FromQuery] Guid? sectionId = null,
-        [FromQuery] Guid? teacherId = null)
+        [FromQuery] Guid? teacherId = null,
+        [FromQuery] Guid? studentId = null)
     {
-        var result = await _mediator.Send(new GetTimetableQuery(termName, sectionId, teacherId));
+        var result = await _mediator.Send(new GetTimetableQuery(termName, sectionId, teacherId, studentId));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
     }
 

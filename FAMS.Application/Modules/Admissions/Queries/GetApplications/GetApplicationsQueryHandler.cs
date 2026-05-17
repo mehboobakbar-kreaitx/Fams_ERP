@@ -26,10 +26,20 @@ public class GetApplicationsQueryHandler : IRequestHandler<GetApplicationsQuery,
         if (request.Status.HasValue) query = query.Where(a => a.Status == request.Status.Value);
         if (request.ProgramId.HasValue) query = query.Where(a => a.ProgramId == request.ProgramId.Value);
 
-        var projected = query
-            .OrderByDescending(a => a.CreatedAt)
-            .Select(a => new ApplicationDto(a.Id, a.FirstName, a.LastName, a.Email, a.Phone,
-                a.Status, a.TestMarks, a.Rank, a.CreatedAt));
+        var projected =
+            from a in query.OrderByDescending(a => a.CreatedAt)
+            join p in _db.Programs on a.ProgramId equals p.Id into prog
+            from p in prog.DefaultIfEmpty()
+            select new ApplicationDto(
+                a.Id,
+                a.FirstName + " " + a.LastName,
+                p != null ? p.Name : "—",
+                a.Email,
+                a.Phone,
+                a.Status,
+                a.CreatedAt,
+                a.TestMarks,
+                a.Rank);
 
         var paged = await PaginatedList<ApplicationDto>.CreateAsync(projected, request.PageNumber, request.PageSize, cancellationToken);
         return Result<PaginatedList<ApplicationDto>>.Success(paged);

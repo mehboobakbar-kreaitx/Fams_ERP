@@ -5,6 +5,7 @@ using FAMS.Application.Modules.Auth.Commands.Logout;
 using FAMS.Application.Modules.Auth.Commands.RefreshToken;
 using FAMS.Application.Modules.Auth.Commands.ResetPassword;
 using FAMS.Application.Modules.Auth.Commands.SetupMfa;
+using FAMS.Application.Modules.Auth.Commands.ValidateMfaLogin;
 using FAMS.Application.Modules.Auth.Commands.VerifyMfa;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -59,12 +60,33 @@ public class AuthController : ControllerBase
         return result.IsSuccess ? NoContent() : BadRequest(result);
     }
 
+    [HttpPost("setup-mfa")]
+    public async Task<IActionResult> SetupMfaForLogin([FromBody] SetupMfaBody body)
+    {
+        var result = await _mediator.Send(new SetupMfaCommand(MfaChallengeToken: body.MfaChallengeToken));
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
+    }
+
+    [HttpPost("verify-mfa")]
+    public async Task<IActionResult> VerifyMfaForLogin([FromBody] VerifyMfaBody body)
+    {
+        var result = await _mediator.Send(new VerifyMfaCommand(body.Code, MfaChallengeToken: body.MfaChallengeToken));
+        return result.IsSuccess ? NoContent() : BadRequest(result);
+    }
+
+    [HttpPost("validate-mfa-login")]
+    public async Task<IActionResult> ValidateMfaLogin([FromBody] ValidateMfaLoginCommand command)
+    {
+        var result = await _mediator.Send(command);
+        return result.IsSuccess ? Ok(result.Value) : Unauthorized(new { error = result.Error });
+    }
+
     [HttpPost("mfa/setup")]
     [Authorize]
     public async Task<IActionResult> SetupMfa()
     {
         if (_currentUser.UserId is null) return Unauthorized();
-        var result = await _mediator.Send(new SetupMfaCommand(_currentUser.UserId));
+        var result = await _mediator.Send(new SetupMfaCommand(UserId: _currentUser.UserId));
         return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
     }
 
@@ -73,7 +95,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> VerifyMfa([FromBody] VerifyMfaBody body)
     {
         if (_currentUser.UserId is null) return Unauthorized();
-        var result = await _mediator.Send(new VerifyMfaCommand(_currentUser.UserId, body.Code));
+        var result = await _mediator.Send(new VerifyMfaCommand(body.Code, UserId: _currentUser.UserId));
         return result.IsSuccess ? NoContent() : BadRequest(result);
     }
 
@@ -93,6 +115,6 @@ public class AuthController : ControllerBase
 }
 
 public record ChangePasswordBody(string OldPassword, string NewPassword);
-public record VerifyMfaBody(string Code);
+public record SetupMfaBody(string MfaChallengeToken);
+public record VerifyMfaBody(string Code, string? MfaChallengeToken = null);
 public record ForgotPasswordBody(string Email);
-

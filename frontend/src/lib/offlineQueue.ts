@@ -5,7 +5,7 @@ export type QueuedAttendance = {
   id?: number
   sectionId: string
   date: string
-  entries: Array<{ studentId: string; isPresent: boolean; remarks?: string }>
+  entries: Array<{ studentId: string; isPresent: boolean; isLate: boolean; isLeave: boolean; remarks?: string | null }>
   queuedAt: string
 }
 
@@ -37,6 +37,7 @@ export async function flushQueue(): Promise<{ sent: number; failed: number }> {
         sectionId: item.sectionId,
         date: item.date,
         entries: item.entries,
+        isOfflineEntry: true,
       })
       if (item.id != null) await db.pending.delete(item.id)
       sent++

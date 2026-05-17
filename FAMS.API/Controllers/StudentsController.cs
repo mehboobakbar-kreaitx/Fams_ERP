@@ -3,7 +3,9 @@ using FAMS.Application.Modules.CRM.Commands.CreateStudent;
 using FAMS.Application.Modules.CRM.Commands.DeleteStudent;
 using FAMS.Application.Modules.CRM.Commands.UpdateStudent;
 using FAMS.Application.Modules.CRM.Commands.UpdateStudentStatus;
+using FAMS.Application.Modules.CRM.Commands.UploadStudentDocument;
 using FAMS.Application.Modules.CRM.Queries.GetStudentById;
+using FAMS.Application.Modules.CRM.Queries.GetStudentDocuments;
 using FAMS.Application.Modules.CRM.Queries.GetStudents;
 using FAMS.Domain.Enums;
 using MediatR;
@@ -78,6 +80,37 @@ public class StudentsController : ControllerBase
     {
         var result = await _mediator.Send(new DeleteStudentCommand(id));
         return result.IsSuccess ? NoContent() : BadRequest(result);
+    }
+
+    [HttpGet("{id:guid}/documents")]
+    public async Task<IActionResult> GetDocuments(Guid id)
+    {
+        var result = await _mediator.Send(new GetStudentDocumentsQuery(id));
+        return result.IsSuccess ? Ok(result.Value) : BadRequest(result);
+    }
+
+    [HttpPost("{id:guid}/documents")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UploadDocument(
+        Guid id, IFormFile file, [FromForm] string documentType)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "No file provided." });
+
+        var command = new UploadStudentDocumentCommand
+        {
+            StudentId = id,
+            DocumentType = documentType,
+            FileName = Path.GetFileName(file.FileName),
+            ContentType = file.ContentType,
+            FileSize = file.Length,
+            Content = file.OpenReadStream(),
+        };
+
+        var result = await _mediator.Send(command);
+        return result.IsSuccess
+            ? CreatedAtAction(nameof(GetDocuments), new { id }, new { documentId = result.Value })
+            : BadRequest(result);
     }
 }
 

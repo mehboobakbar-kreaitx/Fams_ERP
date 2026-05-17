@@ -38,9 +38,18 @@ public class MarkAttendanceCommandHandler : IRequestHandler<MarkAttendanceComman
         _db.Attendances.AddRange(newRecords);
         await _db.SaveChangesAsync(cancellationToken);
 
-        // Fire-and-forget notifications via the MediatR notification pipeline.
-        // Channel handlers (SMS / email / in-app) each subscribe to StudentMarkedAbsentEvent.
-        var absentStudentIds = request.Entries.Where(e => !e.IsPresent).Select(e => e.StudentId).ToList();
+        // Only notify for students who were freshly inserted as absent (not Leave, not already recorded).
+        var newAbsentStudentIds = newRecords
+            .Where(r => !r.IsPresent)
+            .Select(r => r.StudentId!.Value)
+            .ToHashSet();
+        // Exclude entries the caller flagged as approved leave — those are not true absences.
+        var leaveStudentIds = request.Entries
+            .Where(e => e.IsLeave)
+            .Select(e => e.StudentId)
+            .ToHashSet();
+        var absentStudentIds = newAbsentStudentIds.Except(leaveStudentIds).ToList();
+
         if (absentStudentIds.Count > 0)
         {
             var absentStudents = await _db.Students

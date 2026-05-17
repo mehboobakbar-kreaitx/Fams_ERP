@@ -36,18 +36,25 @@ public class EnterMarksCommandHandler : IRequestHandler<EnterMarksCommand, Resul
         if (alreadyPublished)
             return Result<int>.Failure("Results for this subject/exam/term have already been published and cannot be edited.");
 
-        int saved = 0;
+        // Load all existing records for this subject/exam/term in one query (avoids N+1).
+        var existingByStudentId = await _db.Results
+            .Where(r => r.SubjectId == request.SubjectId
+                     && r.ExamType == request.ExamType
+                     && r.TermName == request.TermName
+                     && studentIds.Contains(r.StudentId))
+            .ToDictionaryAsync(r => r.StudentId, cancellationToken);
+
+        int saved = 0, updated = 0;
         foreach (var entry in request.Entries)
         {
-            var existing = await _db.Results.FirstOrDefaultAsync(
-                r => r.StudentId == entry.StudentId
-                  && r.SubjectId == request.SubjectId
-                  && r.ExamType == request.ExamType
-                  && r.TermName == request.TermName, cancellationToken);
-
             var grade = CalculateGrade(entry.MarksObtained, request.TotalMarks);
 
-            if (existing is null)
+            if (existingByStudentId.TryGetValue(entry.StudentId, out var existing))
+            {
+                existing.UpdateMarks(entry.MarksObtained, request.TotalMarks, grade, entry.Remarks);
+                updated++;
+            }
+            else
             {
                 var entity = ResultEntity.Create(
                     entry.StudentId, request.SubjectId, request.ExamType,
@@ -59,7 +66,7 @@ public class EnterMarksCommandHandler : IRequestHandler<EnterMarksCommand, Resul
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return Result<int>.Success(saved);
+        return Result<int>.Success(saved + updated);
     }
 
     private static string CalculateGrade(decimal obtained, decimal total)

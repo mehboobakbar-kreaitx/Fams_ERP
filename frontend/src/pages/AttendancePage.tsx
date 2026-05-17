@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { axiosClient } from '../api/axiosClient'
+import { enqueueAttendance } from '../lib/offlineQueue'
 
 type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Leave'
 
@@ -97,6 +98,7 @@ export default function AttendancePage() {
         studentId: s.id,
         isPresent: st === 'Present' || st === 'Late',
         isLate: st === 'Late',
+        isLeave: st === 'Leave',
         remarks: st === 'Leave' ? 'On approved leave' : null,
       }
     })
@@ -105,18 +107,18 @@ export default function AttendancePage() {
       sectionId,
       date: new Date(date).toISOString(),
       entries,
-      isOfflineEntry: false,
     }
 
     try {
-      const res = await axiosClient.post<{ recorded: number }>('/academic/attendance', payload)
+      const res = await axiosClient.post<{ recorded: number }>('/academic/attendance', {
+        ...payload,
+        isOfflineEntry: false,
+      })
       toast.success(`Attendance saved (${res.data.recorded} records).`)
     } catch (err) {
       if (isNetworkError(err)) {
         try {
-          const queue = JSON.parse(localStorage.getItem('attendance_offline_queue') ?? '[]')
-          queue.push({ ...payload, isOfflineEntry: true, queuedAt: new Date().toISOString() })
-          localStorage.setItem('attendance_offline_queue', JSON.stringify(queue))
+          await enqueueAttendance(payload)
           toast('Network unavailable — queued for sync when online.', { icon: '📶' })
         } catch {
           toast.error('Failed to queue attendance offline.')

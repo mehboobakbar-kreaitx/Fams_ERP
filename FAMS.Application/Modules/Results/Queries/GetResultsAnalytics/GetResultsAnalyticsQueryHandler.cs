@@ -32,11 +32,6 @@ public class GetResultsAnalyticsQueryHandler
         var passCount = percentages.Count(p => p >= request.PassPercentageThreshold);
         var failCount = rows.Count - passCount;
 
-        var subjectName = await _db.Subjects
-            .Where(s => s.Id == request.SubjectId)
-            .Select(s => s.Name)
-            .FirstOrDefaultAsync(cancellationToken) ?? string.Empty;
-
         var distribution = rows
             .GroupBy(r => r.Grade ?? "Ungraded")
             .Select(g => new GradeDistributionItem(g.Key, g.Count()))
@@ -56,7 +51,6 @@ public class GetResultsAnalyticsQueryHandler
             percentages.Min(),
             distribution);
 
-        _ = subjectName;
         return Result<ResultsAnalyticsDto>.Success(dto);
     }
 }

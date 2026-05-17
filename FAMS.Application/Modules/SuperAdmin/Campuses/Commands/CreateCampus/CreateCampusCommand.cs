@@ -12,4 +12,5 @@ public record CreateCampusCommand(
     string Email,
     string PrincipalName,
     int MaxCapacity,
-    bool IsMainCampus = false) : IRequest<Result<Guid>>;
+    bool IsMainCampus = false,
+    Guid? SchoolId = null) : IRequest<Result<Guid>>;

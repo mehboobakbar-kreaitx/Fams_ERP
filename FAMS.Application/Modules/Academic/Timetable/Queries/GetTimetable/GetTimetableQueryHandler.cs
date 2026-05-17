@@ -15,14 +15,30 @@ public class GetTimetableQueryHandler
     public async Task<Result<IReadOnlyList<TimetableSlotDto>>> Handle(
         GetTimetableQuery request, CancellationToken cancellationToken)
     {
-        if (request.SectionId is null && request.TeacherId is null)
-            return Result<IReadOnlyList<TimetableSlotDto>>.Failure("Specify either SectionId or TeacherId.");
+        var sectionId = request.SectionId;
 
-        var query = _db.TimetableSlots.AsNoTracking()
-            .Where(t => t.TermName == request.TermName);
+        if (request.StudentId.HasValue && sectionId is null)
+        {
+            var student = await _db.Students.AsNoTracking()
+                .Where(s => s.Id == request.StudentId.Value)
+                .Select(s => new { s.SectionId })
+                .FirstOrDefaultAsync(cancellationToken);
 
-        if (request.SectionId.HasValue)
-            query = query.Where(t => t.SectionId == request.SectionId.Value);
+            if (student is null)
+                return Result<IReadOnlyList<TimetableSlotDto>>.Failure("Student not found.");
+
+            sectionId = student.SectionId;
+        }
+
+        if (sectionId is null && request.TeacherId is null)
+            return Result<IReadOnlyList<TimetableSlotDto>>.Failure("Specify either SectionId, StudentId, or TeacherId.");
+
+        var query = _db.TimetableSlots.AsNoTracking().AsQueryable();
+
+        if (request.TermName is not null)
+            query = query.Where(t => t.TermName == request.TermName);
+        if (sectionId.HasValue)
+            query = query.Where(t => t.SectionId == sectionId.Value);
         if (request.TeacherId.HasValue)
             query = query.Where(t => t.TeacherId == request.TeacherId.Value);
 

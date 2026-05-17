@@ -19,12 +19,17 @@ public class PublishResultsCommandHandler : IRequestHandler<PublishResultsComman
 
     public async Task<Result<int>> Handle(PublishResultsCommand request, CancellationToken cancellationToken)
     {
-        var results = await _db.Results
+        var query = _db.Results
             .Where(r => r.SubjectId == request.SubjectId
                      && r.ExamType == request.ExamType
                      && r.TermName == request.TermName
-                     && !r.IsPublished)
-            .ToListAsync(cancellationToken);
+                     && !r.IsPublished);
+
+        // Scope to campus when caller is campus-scoped (non-SystemAdmin).
+        if (request.CampusId.HasValue && request.CampusId.Value != Guid.Empty)
+            query = query.Where(r => r.CampusId == request.CampusId.Value);
+
+        var results = await query.ToListAsync(cancellationToken);
 
         if (results.Count == 0)
             return Result<int>.Failure("No unpublished results match the supplied subject/exam/term.");

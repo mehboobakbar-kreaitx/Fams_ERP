@@ -24,7 +24,8 @@ export default function LeavePage() {
     queryKey: ['leave-history', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const res = await axiosClient.get<LeaveRequest[] | { items: LeaveRequest[] }>(`/hrm/leave/employee/${user!.id}`, {
+      const res = await axiosClient.get<LeaveRequest[] | { items: LeaveRequest[] }>(`/hrm/leaves`, {
+        params: { staffId: user!.id },
         headers: { 'x-skip-error-toast': '1' },
       })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []
@@ -37,7 +38,7 @@ export default function LeavePage() {
       if (!form.fromDate || !form.toDate || !form.reason.trim()) {
         throw new Error('Fill in dates and a reason.')
       }
-      const { data } = await axiosClient.post<{ id: string }>('/hrm/leave', {
+      const { data } = await axiosClient.post<{ id: string }>('/hrm/leaves', {
         employeeId: user?.id,
         leaveType: form.leaveType,
         fromDate: form.fromDate,

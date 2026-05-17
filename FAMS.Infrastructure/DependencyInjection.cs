@@ -76,6 +76,7 @@ public static class DependencyInjection
         services.AddScoped<IAiChatbotService, AiChatbotService>();
         services.AddSingleton<IDateTime, DateTimeService>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<IMfaQrCodeService, MfaQrCodeService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IPdfService, PdfService>();
 

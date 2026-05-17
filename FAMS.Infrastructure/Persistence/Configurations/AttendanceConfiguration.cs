@@ -11,8 +11,12 @@ public class AttendanceConfiguration : IEntityTypeConfiguration<Attendance>
         b.ToTable("attendances");
         b.HasKey(a => a.Id);
         b.Property(a => a.Remarks).HasMaxLength(500);
-        b.HasIndex(a => new { a.StudentId, a.Date });
-        b.HasIndex(a => new { a.StaffId, a.Date });
+        b.HasIndex(a => new { a.StudentId, a.Date })
+            .IsUnique()
+            .HasFilter("\"StudentId\" IS NOT NULL");
+        b.HasIndex(a => new { a.StaffId, a.Date })
+            .IsUnique()
+            .HasFilter("\"StaffId\" IS NOT NULL");
     }
 }
 

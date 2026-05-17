@@ -5,14 +5,17 @@ import { authStore } from './store/authStore'
 import { landingPath, resolvePortal } from './components/auth/rolePortal'
 
 const Login = lazy(() => import('./pages/Login'))
+const MfaSetupPage = lazy(() => import('./pages/mfa/MfaSetupPage'))
+const MfaVerifyPage = lazy(() => import('./pages/mfa/MfaVerifyPage'))
 const PublicApplyPage = lazy(() => import('./pages/PublicApplyPage'))
 
 // Layouts
-const SuperAdminLayout = lazy(() => import('./components/layout/SuperAdminLayout'))
-const CampusLayout     = lazy(() => import('./components/layout/CampusLayout'))
-const TeacherLayout    = lazy(() => import('./components/layout/TeacherLayout'))
-const StudentLayout    = lazy(() => import('./components/layout/StudentLayout'))
-const ParentLayout     = lazy(() => import('./components/layout/ParentLayout'))
+const SuperAdminLayout  = lazy(() => import('./components/layout/SuperAdminLayout'))
+const ExecutiveLayout   = lazy(() => import('./components/layout/ExecutiveLayout'))
+const CampusLayout      = lazy(() => import('./components/layout/CampusLayout'))
+const TeacherLayout     = lazy(() => import('./components/layout/TeacherLayout'))
+const StudentLayout     = lazy(() => import('./components/layout/StudentLayout'))
+const ParentLayout      = lazy(() => import('./components/layout/ParentLayout'))
 
 // Campus setup (first-time School Admin flow — no layout wrapper)
 const CampusSetupPage = lazy(() => import('./pages/campus/CampusSetupPage'))
@@ -76,6 +79,8 @@ export default function App() {
       >
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/mfa/setup" element={<MfaSetupPage />} />
+          <Route path="/mfa/verify" element={<MfaVerifyPage />} />
           <Route path="/apply" element={<PublicApplyPage />} />
           <Route path="/campus/setup" element={<CampusSetupPage />} />
           <Route
@@ -102,6 +107,18 @@ export default function App() {
             <Route path="/super-admin/finance"   element={<InstitutionFinancePage />} />
             <Route path="/super-admin/audit"     element={<AuditLogPage />} />
             <Route path="/super-admin/config"    element={<SystemConfigPage />} />
+          </Route>
+
+          {/* Executive Portal — Executive only */}
+          <Route
+            element={
+              <ProtectedRoute roles={['Executive']}>
+                <ExecutiveLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/executive" element={<Navigate to="/executive/dashboard" replace />} />
+            <Route path="/executive/dashboard" element={<SuperAdminDashboard />} />
           </Route>
 
           {/* Campus Portal — Principal, Accountant, HrOfficer, ProcurementOfficer, AcademicCoordinator */}

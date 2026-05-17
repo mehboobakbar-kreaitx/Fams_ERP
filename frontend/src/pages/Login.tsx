@@ -2,14 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { axiosClient } from '../api/axiosClient'
 import { authStore } from '../store/authStore'
-import { landingPath, resolvePortal } from '../components/auth/rolePortal'
-
-const EMPTY_GUID = '00000000-0000-0000-0000-000000000000'
-
-// Campus-portal roles that require a campus to be assigned before the dashboard is usable.
-const CAMPUS_SETUP_ROLES = new Set([
-  'Principal', 'AcademicCoordinator', 'Accountant', 'HrOfficer', 'ProcurementOfficer',
-])
+import { authenticatedLandingPath } from '../components/auth/rolePortal'
 
 type LoginResponse = {
   accessToken: string
@@ -21,6 +14,8 @@ type LoginResponse = {
   schoolId: string | null
   fullName: string
   mfaRequired: boolean
+  mfaEnrollmentRequired: boolean
+  mfaChallengeToken?: string | null
 }
 
 export default function Login() {
@@ -37,37 +32,19 @@ export default function Login() {
     try {
       const { data } = await axiosClient.post<LoginResponse>('/auth/login', { email, password })
 
-      if (data.mfaRequired) {
-        setError('MFA is required for this account. MFA flow not yet implemented.')
+      if (data.mfaEnrollmentRequired || data.mfaRequired) {
+        if (!data.mfaChallengeToken) {
+          setError('MFA challenge could not be started.')
+          return
+        }
+
+        authStore.setPendingMfa(data, email)
+        navigate(data.mfaEnrollmentRequired ? '/mfa/setup' : '/mfa/verify', { replace: true })
         return
       }
 
-      const [firstName, ...rest] = (data.fullName ?? '').split(' ')
-      authStore.setState({
-        user: {
-          id:       data.userId,
-          email,
-          firstName: firstName ?? '',
-          lastName:  rest.join(' '),
-          campusId:  data.campusId,
-          schoolId:  data.schoolId ?? null,
-          roles:     data.roles ?? [],
-        },
-        token:        data.accessToken,
-        refreshToken: data.refreshToken,
-      })
-
-      // School admin with no campus yet → first-time setup flow
-      const needsSetup =
-        data.roles.some((r) => CAMPUS_SETUP_ROLES.has(r)) &&
-        (!data.campusId || data.campusId === EMPTY_GUID)
-
-      if (needsSetup) {
-        navigate('/campus/setup')
-        return
-      }
-
-      navigate(landingPath(resolvePortal(data.roles)))
+      authStore.setSessionFromLogin(data, email)
+      navigate(authenticatedLandingPath(data.roles, data.campusId))
     } catch {
       setError('Invalid email or password.')
     } finally {
@@ -106,7 +83,7 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="w-full px-4 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              placeholder="••••••••"
+              placeholder="********"
             />
           </div>
 
@@ -117,12 +94,12 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-primary-700 hover:bg-primary-800 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-60"
           >
-            {loading ? 'Signing in…' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2026 Falcon College Network. All rights reserved.
+          (c) 2026 Falcon College Network. All rights reserved.
         </p>
       </div>
     </div>

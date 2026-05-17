@@ -22,7 +22,8 @@ export default function TimetablePage() {
     queryKey: ['student-timetable', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const res = await axiosClient.get<Slot[] | { items: Slot[] }>(`/timetable/student/${user!.id}`, {
+      const res = await axiosClient.get<Slot[] | { items: Slot[] }>(`/academic/timetable`, {
+        params: { studentId: user!.id },
         headers: { 'x-skip-error-toast': '1' },
       })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []

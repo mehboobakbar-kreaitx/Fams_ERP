@@ -1,4 +1,5 @@
 ﻿using FAMS.Application.Common.Interfaces;
+using FAMS.Application.Modules.Admissions.Commands.EnrollApplicant;
 using FAMS.Application.Modules.Admissions.Commands.GenerateMeritList;
 using FAMS.Application.Modules.Admissions.Commands.ReviewApplication;
 using FAMS.Application.Modules.Admissions.Commands.SubmitApplication;
@@ -55,6 +56,16 @@ public class AdmissionsController : ControllerBase
         return result.IsSuccess ? NoContent() : BadRequest(result);
     }
 
+    [HttpPost("applications/{id:guid}/enroll")]
+    [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
+    public async Task<IActionResult> Enroll(Guid id, [FromBody] EnrollApplicantBody body)
+    {
+        var result = await _mediator.Send(new EnrollApplicantCommand(
+            id, body.ClassId, body.SectionId, body.RollNumber,
+            body.EmergencyContactName, body.EmergencyContactPhone));
+        return result.IsSuccess ? Ok(new { studentId = result.Value }) : BadRequest(result);
+    }
+
     [HttpPost("merit-list")]
     [Authorize(Roles = "SystemAdmin,Principal,AcademicCoordinator")]
     public async Task<IActionResult> MeritList([FromBody] GenerateMeritListCommand command)
@@ -74,4 +85,5 @@ public class AdmissionsController : ControllerBase
 }
 
 public record ReviewApplicationBody(ApplicationStatus NewStatus, string ReviewNotes);
+public record EnrollApplicantBody(Guid ClassId, Guid SectionId, string RollNumber, string EmergencyContactName, string EmergencyContactPhone);
 

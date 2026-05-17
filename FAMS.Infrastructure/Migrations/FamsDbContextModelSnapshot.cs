@@ -624,9 +624,13 @@ namespace FAMS.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StaffId", "Date");
+                    b.HasIndex("StaffId", "Date")
+                        .IsUnique()
+                        .HasFilter("\"StaffId\" IS NOT NULL");
 
-                    b.HasIndex("StudentId", "Date");
+                    b.HasIndex("StudentId", "Date")
+                        .IsUnique()
+                        .HasFilter("\"StudentId\" IS NOT NULL");
 
                     b.ToTable("attendances", (string)null);
                 });
@@ -772,6 +776,9 @@ namespace FAMS.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -785,6 +792,8 @@ namespace FAMS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("IsMainCampus");
+
+                    b.HasIndex("SchoolId");
 
                     b.ToTable("campuses", (string)null);
                 });
@@ -2485,6 +2494,78 @@ namespace FAMS.Infrastructure.Migrations
                     b.ToTable("results", (string)null);
                 });
 
+            modelBuilder.Entity("FAMS.Domain.Entities.School", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Address")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CampusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LogoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Schools");
+                });
+
             modelBuilder.Entity("FAMS.Domain.Entities.Section", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3253,6 +3334,9 @@ namespace FAMS.Infrastructure.Migrations
                     b.Property<DateTime?>("RefreshTokenExpiry")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("SchoolId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
@@ -3468,6 +3552,17 @@ namespace FAMS.Infrastructure.Migrations
                     b.HasOne("FAMS.Domain.Entities.Student", null)
                         .WithMany("Attendances")
                         .HasForeignKey("StudentId");
+                });
+
+            modelBuilder.Entity("FAMS.Domain.Entities.Campus", b =>
+                {
+                    b.HasOne("FAMS.Domain.Entities.School", "School")
+                        .WithMany("Campuses")
+                        .HasForeignKey("SchoolId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("School");
                 });
 
             modelBuilder.Entity("FAMS.Domain.Entities.ClassRoom", b =>
@@ -3939,6 +4034,11 @@ namespace FAMS.Infrastructure.Migrations
             modelBuilder.Entity("FAMS.Domain.Entities.PurchaseRequisition", b =>
                 {
                     b.Navigation("LineItems");
+                });
+
+            modelBuilder.Entity("FAMS.Domain.Entities.School", b =>
+                {
+                    b.Navigation("Campuses");
                 });
 
             modelBuilder.Entity("FAMS.Domain.Entities.Section", b =>

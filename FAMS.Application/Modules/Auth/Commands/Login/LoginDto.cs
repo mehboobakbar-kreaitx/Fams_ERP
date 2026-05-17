@@ -10,4 +10,5 @@ public record LoginDto(
     Guid? SchoolId,
     string FullName,
     bool MfaRequired,
-    bool MfaEnrollmentRequired = false);
+    bool MfaEnrollmentRequired = false,
+    string? MfaChallengeToken = null);

@@ -40,7 +40,7 @@ public class IdentityService : IIdentityService
     {
         var u = await _userManager.FindByIdAsync(userId);
         if (u is null) return false;
-        return await _userManager.VerifyTwoFactorTokenAsync(u, _userManager.Options.Tokens.AuthenticatorTokenProvider, code);
+        return await _userManager.VerifyTwoFactorTokenAsync(u, _userManager.Options.Tokens.AuthenticatorTokenProvider, NormalizeAuthenticatorCode(code));
     }
 
     public async Task SetRefreshTokenAsync(string userId, string? refreshToken, DateTime? expiry)
@@ -88,11 +88,18 @@ public class IdentityService : IIdentityService
         return key ?? string.Empty;
     }
 
+    public async Task<string> ResetAuthenticatorKeyAsync(string userId)
+    {
+        var u = await _userManager.FindByIdAsync(userId) ?? throw new InvalidOperationException("User not found.");
+        await _userManager.ResetAuthenticatorKeyAsync(u);
+        return await _userManager.GetAuthenticatorKeyAsync(u) ?? string.Empty;
+    }
+
     public async Task<bool> EnableTwoFactorAsync(string userId, string code)
     {
         var u = await _userManager.FindByIdAsync(userId);
         if (u is null) return false;
-        var valid = await _userManager.VerifyTwoFactorTokenAsync(u, _userManager.Options.Tokens.AuthenticatorTokenProvider, code);
+        var valid = await _userManager.VerifyTwoFactorTokenAsync(u, _userManager.Options.Tokens.AuthenticatorTokenProvider, NormalizeAuthenticatorCode(code));
         if (!valid) return false;
         var result = await _userManager.SetTwoFactorEnabledAsync(u, true);
         return result.Succeeded;
@@ -145,5 +152,10 @@ public class IdentityService : IIdentityService
         if (u is null) return;
         u.CampusId = campusId;
         await _userManager.UpdateAsync(u);
+    }
+
+    private static string NormalizeAuthenticatorCode(string code)
+    {
+        return code.Replace(" ", string.Empty).Replace("-", string.Empty);
     }
 }

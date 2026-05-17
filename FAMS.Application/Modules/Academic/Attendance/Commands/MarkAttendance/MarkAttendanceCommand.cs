@@ -3,7 +3,7 @@ using MediatR;
 
 namespace FAMS.Application.Modules.Academic.Attendance.Commands.MarkAttendance;
 
-public record AttendanceEntry(Guid StudentId, bool IsPresent, bool IsLate, string? Remarks);
+public record AttendanceEntry(Guid StudentId, bool IsPresent, bool IsLate, bool IsLeave = false, string? Remarks = null);
 
 public record MarkAttendanceCommand(
     Guid SectionId,

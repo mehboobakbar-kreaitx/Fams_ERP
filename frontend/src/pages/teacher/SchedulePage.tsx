@@ -23,7 +23,8 @@ export default function SchedulePage() {
     queryKey: ['teacher-schedule', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const res = await axiosClient.get<Slot[] | { items: Slot[] }>(`/timetable/teacher/${user!.id}`, {
+      const res = await axiosClient.get<Slot[] | { items: Slot[] }>(`/academic/timetable`, {
+        params: { teacherId: user!.id },
         headers: { 'x-skip-error-toast': '1' },
       })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []

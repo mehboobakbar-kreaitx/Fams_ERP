@@ -28,6 +28,16 @@ public class ReviewApplicationCommandHandler : IRequestHandler<ReviewApplication
         var application = await _db.Applications.FirstOrDefaultAsync(a => a.Id == request.ApplicationId, cancellationToken)
             ?? throw new NotFoundException(nameof(AppEntity), request.ApplicationId);
 
+        var allowed = application.Status switch
+        {
+            ApplicationStatus.Applied      => new[] { ApplicationStatus.UnderReview, ApplicationStatus.Declined },
+            ApplicationStatus.UnderReview  => new[] { ApplicationStatus.Offered, ApplicationStatus.Declined },
+            ApplicationStatus.Offered      => new[] { ApplicationStatus.Enrolled, ApplicationStatus.Withdrawn },
+            _                              => Array.Empty<ApplicationStatus>(),
+        };
+        if (!allowed.Contains(request.NewStatus))
+            return Result.Failure($"Cannot transition from '{application.Status}' to '{request.NewStatus}'.");
+
         application.Review(request.NewStatus, request.ReviewNotes, request.ReviewedById);
         await _db.SaveChangesAsync(cancellationToken);
 
