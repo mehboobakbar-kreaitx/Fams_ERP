@@ -27,7 +27,7 @@ public class SetupMfaCommandHandler : IRequestHandler<SetupMfaCommand, Result<Mf
         if (user is null) return Result<MfaSetupDto>.Failure("User not found.");
         if (user.TwoFactorEnabled) return Result<MfaSetupDto>.Failure("MFA is already enabled.");
 
-        var key = await _identity.ResetAuthenticatorKeyAsync(userId);
+        var key = await _identity.GetOrCreateAuthenticatorKeyAsync(userId);
         var otpAuthUri = GenerateOtpAuthUri(user.Email, key);
         var qrCodeDataUrl = _qrCode.GenerateDataUrl(otpAuthUri);
 

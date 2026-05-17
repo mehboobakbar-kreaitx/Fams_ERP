@@ -57,11 +57,11 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5196',
         changeOrigin: true,
       },
       '/hubs': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5196',
         changeOrigin: true,
         ws: true,
       },
