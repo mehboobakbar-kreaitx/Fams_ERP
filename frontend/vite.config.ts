@@ -51,10 +51,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    hmr: {
-      host: 'localhost',
-      port: 5173,
-    },
+    // HMR must use the same port as the dev server. Overriding to a different
+    // port (e.g., 5173) causes the HMR WebSocket client to connect to a port
+    // nothing listens on, triggering endless reconnect loops and "duplicated
+    // frontend instance" warnings in the browser console.
     proxy: {
       '/api': {
         target: 'http://localhost:8080',

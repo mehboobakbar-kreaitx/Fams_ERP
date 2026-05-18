@@ -130,6 +130,15 @@ export const authStore = {
     localStorage.setItem(PENDING_MFA_KEY, JSON.stringify(updated))
   },
 
+  // Clears only the JWT session (access + refresh tokens) without touching
+  // pending MFA state. Used by the Axios interceptor when a 401 occurs during
+  // the MFA flow — we must not destroy the mfaChallengeToken at that point.
+  clearSession() {
+    localStorage.removeItem(AUTH_KEY)
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+  },
+
   clear() {
     localStorage.removeItem(AUTH_KEY)
     localStorage.removeItem('access_token')

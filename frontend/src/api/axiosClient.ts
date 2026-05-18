@@ -49,6 +49,24 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = []
 }
 
+// Public auth endpoints that authenticate via mfaChallengeToken or their own
+// credential scheme — never via the JWT Bearer token. The 401 refresh logic
+// must not run for these; doing so would wipe pending MFA state and cause
+// redirect/setup loops.
+const PUBLIC_AUTH_PATHS = [
+  '/auth/login',
+  '/auth/refresh',
+  '/auth/setup-mfa',
+  '/auth/validate-mfa-login',
+  '/auth/verify-mfa',
+  '/auth/password/',
+]
+
+function isPublicAuthEndpoint(url: string | undefined): boolean {
+  if (!url) return false
+  return PUBLIC_AUTH_PATHS.some((p) => url.includes(p))
+}
+
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -64,6 +82,14 @@ axiosClient.interceptors.response.use(
     }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Public auth endpoints use their own credential scheme (mfaChallengeToken,
+      // password). Running JWT refresh here would: (a) always fail (no tokens in
+      // localStorage during MFA pending state), and (b) call authStore.clear()
+      // which destroys fams_pending_mfa, causing the MFA redirect/setup loop.
+      if (isPublicAuthEndpoint(originalRequest.url as string | undefined)) {
+        return Promise.reject(error)
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
@@ -75,12 +101,22 @@ axiosClient.interceptors.response.use(
 
       originalRequest._retry = true
 
+      const phase = authStore.getAuthPhase()
       const accessToken = localStorage.getItem('access_token')
       const refreshToken = localStorage.getItem('refresh_token')
-      if (!accessToken || !refreshToken) {
+
+      if (!accessToken || !refreshToken || phase === 'mfa_pending') {
         // Drain the queue before redirecting so callers don't hang.
         processQueue(error, null)
-        authStore.clear()
+        // Use clearSession() — not clear() — so that a pending MFA challenge
+        // token is preserved if the 401 originated from a non-auth API call
+        // while the user was mid-MFA-flow. clear() calls clearPendingMfa()
+        // which would destroy the challenge token and cause a redirect loop.
+        if (phase === 'mfa_pending') {
+          authStore.clearSession()
+        } else {
+          authStore.clear()
+        }
         window.location.href = '/login'
         return Promise.reject(error)
       }

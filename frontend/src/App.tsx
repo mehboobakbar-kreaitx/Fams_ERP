@@ -172,7 +172,9 @@ function MfaRouteGuard({ enrollment, children }: { enrollment: boolean; children
   const phase = authStore.getAuthPhase()
   if (phase === 'authenticated') return <RootRedirect />
   if (phase === 'anonymous') return <Navigate to="/login" replace />
-  const p = authStore.getPendingMfa()!
+  const p = authStore.getPendingMfa()
+  // Safety: phase is mfa_pending but localStorage entry is missing/corrupted.
+  if (!p) return <Navigate to="/login" replace />
   if (enrollment && !p.mfaEnrollmentRequired) return <Navigate to="/mfa/verify" replace />
   if (!enrollment && p.mfaEnrollmentRequired) return <Navigate to="/mfa/setup" replace />
   return <>{children}</>
