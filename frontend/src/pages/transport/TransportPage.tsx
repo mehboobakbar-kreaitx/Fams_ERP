@@ -94,7 +94,9 @@ export default function TransportPage() {
   const summaryQuery = useQuery({
     queryKey: ['transport-summary'],
     queryFn: async () => {
-      const res = await axiosClient.get<TransportSummary>('/transport/summary')
+      const res = await axiosClient.get<TransportSummary>('/transport/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       return res.data
     },
     retry: false,
@@ -103,7 +105,9 @@ export default function TransportPage() {
   const routesQuery = useQuery({
     queryKey: ['transport-routes'],
     queryFn: async () => {
-      const res = await axiosClient.get<Route[] | { items: Route[] }>('/transport/routes')
+      const res = await axiosClient.get<Route[] | { items: Route[] }>('/transport/routes', {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []
     },
     retry: false,
@@ -113,7 +117,9 @@ export default function TransportPage() {
   const vehiclesQuery = useQuery({
     queryKey: ['transport-vehicles'],
     queryFn: async () => {
-      const res = await axiosClient.get<Vehicle[] | { items: Vehicle[] }>('/transport/vehicles')
+      const res = await axiosClient.get<Vehicle[] | { items: Vehicle[] }>('/transport/vehicles', {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []
     },
     retry: false,
@@ -123,7 +129,9 @@ export default function TransportPage() {
   const driversQuery = useQuery({
     queryKey: ['transport-drivers'],
     queryFn: async () => {
-      const res = await axiosClient.get<Driver[] | { items: Driver[] }>('/transport/drivers')
+      const res = await axiosClient.get<Driver[] | { items: Driver[] }>('/transport/drivers', {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []
     },
     retry: false,
@@ -133,7 +141,9 @@ export default function TransportPage() {
   const studentsQuery = useQuery({
     queryKey: ['transport-students'],
     queryFn: async () => {
-      const res = await axiosClient.get<StudentAssignment[] | { items: StudentAssignment[] }>('/transport/student-assignments')
+      const res = await axiosClient.get<StudentAssignment[] | { items: StudentAssignment[] }>('/transport/student-assignments', {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       return Array.isArray(res.data) ? res.data : res.data.items ?? []
     },
     retry: false,
@@ -247,7 +257,9 @@ export default function TransportPage() {
     { key: 'students', label: 'Student Assignments' },
   ]
 
-  const isError = routesQuery.isError || vehiclesQuery.isError || driversQuery.isError || studentsQuery.isError
+  // summaryQuery.isError must be included: a 404 on /transport/summary is the
+  // primary signal that the Transport backend module is not yet deployed.
+  const isError = summaryQuery.isError || routesQuery.isError || vehiclesQuery.isError || driversQuery.isError || studentsQuery.isError
 
   return (
     <div>

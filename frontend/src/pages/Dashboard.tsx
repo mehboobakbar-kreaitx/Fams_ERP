@@ -64,23 +64,31 @@ export default function Dashboard() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['dashboard-principal'],
     queryFn: async () => {
-      const res = await axiosClient.get<PrincipalDashboardDto>('/dashboard/principal')
+      const res = await axiosClient.get<PrincipalDashboardDto>('/dashboard/principal', {
+        headers: { 'x-skip-error-toast': '1' },
+      })
       return res.data
     },
+    retry: false,
   })
+
+  // isError must be checked before !data: when the API returns 4xx/5xx,
+  // isError=true AND data=undefined. Checking !data first makes the loading
+  // spinner permanent because it evaluates true on every error response.
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
+          Dashboard data could not be loaded. The campus may not be fully provisioned yet.
+        </div>
+      </div>
+    )
+  }
 
   if (isLoading || !data) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">Loading dashboard…</div>
-      </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-red-600">Failed to load dashboard. Please refresh.</div>
       </div>
     )
   }

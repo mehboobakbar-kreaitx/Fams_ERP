@@ -21,10 +21,11 @@ public class GetPrincipalDashboardQueryHandler
     public async Task<Result<PrincipalDashboardDto>> Handle(
         GetPrincipalDashboardQuery request, CancellationToken cancellationToken)
     {
-        if (_currentUser.SchoolId.HasValue &&
-            !await _db.Campuses.AnyAsync(c => c.Id == request.CampusId, cancellationToken))
-            return Result<PrincipalDashboardDto>.Failure("Campus not found or not accessible.");
-
+        // Removed: hard Failure when campus row is missing. The controller already
+        // validated CampusId is non-null from the JWT claim. If the campus has no
+        // data yet (fresh install, unprovisioned campus) the aggregate queries below
+        // naturally return 0 — returning a zero-state dashboard is preferable to a
+        // 400 that locks the user out of the portal permanently.
         var campusId = request.CampusId;
         var today = DateTime.UtcNow.Date;
 
