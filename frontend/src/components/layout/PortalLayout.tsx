@@ -36,6 +36,7 @@ export type PortalLayoutProps = {
   showChatbot?: boolean
   extraSidebarContent?: React.ReactNode
   headerContextSlot?: React.ReactNode
+  preNavContent?: React.ReactNode
 }
 
 // ── Leaf nav item (NavLink to a route) ────────────────────────────────────────
@@ -165,6 +166,7 @@ export default function PortalLayout({
   showChatbot = true,
   extraSidebarContent,
   headerContextSlot,
+  preNavContent,
 }: PortalLayoutProps) {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -214,7 +216,8 @@ export default function PortalLayout({
         {/* Scrollable nav area */}
         <div className="flex-1 overflow-y-auto">
           <nav className="px-3 py-4 space-y-0.5">
-            {navItems.map((item) => (
+              {preNavContent && <div className="mb-2">{preNavContent}</div>}
+              {navItems.map((item) => (
               <NavItem
                 key={item.to ?? item.label}
                 item={item}
