@@ -14,7 +14,12 @@ const theme: PortalTheme = {
   avatarBg: 'bg-red-600',
 }
 
-// Network-level governance — visible only in Network / School scope.
+// ── Network governance nav ────────────────────────────────────────────────────
+// Shown in 'network' scope only.
+// Covers platform-level controls: institution management, cross-campus analytics,
+// audit & compliance, platform finance, security and system configuration.
+// Operational campus modules (HRM, Payroll, Procurement, Assets, Transport,
+// Library, Hostel, Communications) are intentionally absent at this level.
 const networkNavItems: PortalNavItem[] = [
   { to: '/super-admin/dashboard', label: 'Network Dashboard', icon: '🌐' },
 
@@ -23,9 +28,17 @@ const networkNavItems: PortalNavItem[] = [
     icon: '🏛️',
     defaultOpen: true,
     children: [
-      { to: '/super-admin/schools',       label: 'Schools',       icon: '🏛️' },
-      { to: '/super-admin/campuses',      label: 'Campuses',      icon: '🏫' },
-      { to: '/super-admin/subscriptions', label: 'Subscriptions', icon: '💳' },
+      { to: '/super-admin/schools',  label: 'Schools',  icon: '🏛️' },
+      { to: '/super-admin/campuses', label: 'Campuses', icon: '🏫' },
+    ],
+  },
+
+  {
+    label: 'Platform Finance',
+    icon: '💳',
+    children: [
+      { to: '/super-admin/subscriptions', label: 'Subscriptions & Billing', icon: '💳' },
+      { to: '/super-admin/finance/reports', label: 'Revenue Reports',        icon: '📊' },
     ],
   },
 
@@ -33,17 +46,17 @@ const networkNavItems: PortalNavItem[] = [
     label: 'Network Analytics',
     icon: '📊',
     children: [
-      { to: '/super-admin/reports',               label: 'Analytics Hub',        icon: '📊' },
-      { to: '/super-admin/reports/cross-campus',  label: 'Cross-Campus',         icon: '🌐' },
-      { to: '/super-admin/reports/campus-kpi',    label: 'Campus KPIs',          icon: '🏆' },
-      { to: '/super-admin/reports/academic',      label: 'Academic Overview',    icon: '📚' },
-      { to: '/super-admin/reports/attendance',    label: 'Attendance Overview',  icon: '📅' },
-      { to: '/super-admin/reports/operational',   label: 'Operational Overview', icon: '⚙️' },
+      { to: '/super-admin/reports',              label: 'Analytics Hub',        icon: '📊' },
+      { to: '/super-admin/reports/cross-campus', label: 'Cross-Campus',         icon: '🌐' },
+      { to: '/super-admin/reports/campus-kpi',   label: 'Campus KPIs',          icon: '🏆' },
+      { to: '/super-admin/reports/academic',     label: 'Academic Overview',    icon: '📚' },
+      { to: '/super-admin/reports/attendance',   label: 'Attendance Overview',  icon: '📅' },
+      { to: '/super-admin/reports/operational',  label: 'Operational Overview', icon: '⚙️' },
     ],
   },
 
   {
-    label: 'Audit & Compliance',
+    label: 'Security & Compliance',
     icon: '🛡️',
     children: [
       { to: '/super-admin/security',            label: 'Security Overview',   icon: '🛡️' },
@@ -58,14 +71,45 @@ const networkNavItems: PortalNavItem[] = [
   { to: '/super-admin/config', label: 'System Config', icon: '⚙️' },
 ]
 
-// Campus-operational modules — visible only when a campus workspace is selected.
+// ── School workspace nav ──────────────────────────────────────────────────────
+// Shown in 'school' scope — after a school is selected in the tree.
+// School-scoped analytics and campus list only. NO campus-operational modules.
+const schoolNavItems: PortalNavItem[] = [
+  { to: '/super-admin/dashboard', label: 'School Overview', icon: '🏛️' },
+  { to: '/super-admin/campuses',  label: 'Campuses',        icon: '🏫' },
+
+  {
+    label: 'School Analytics',
+    icon: '📊',
+    defaultOpen: true,
+    children: [
+      { to: '/super-admin/reports/campus-kpi',  label: 'Campus KPIs',          icon: '🏆' },
+      { to: '/super-admin/reports/academic',    label: 'Academic Overview',    icon: '📚' },
+      { to: '/super-admin/reports/attendance',  label: 'Attendance Overview',  icon: '📅' },
+      { to: '/super-admin/reports/operational', label: 'Operational Overview', icon: '⚙️' },
+    ],
+  },
+
+  {
+    label: 'Compliance',
+    icon: '🛡️',
+    children: [
+      { to: '/super-admin/audit',             label: 'Audit Logs',      icon: '🔒' },
+      { to: '/super-admin/security/activity', label: 'Activity Monitor', icon: '👁️' },
+    ],
+  },
+]
+
+// ── Campus workspace nav ──────────────────────────────────────────────────────
+// Shown in 'campus' scope — after a campus is selected in the tree.
+// Full campus-operational modules are unlocked at this level.
 const campusNavItems: PortalNavItem[] = [
-  { to: '/super-admin/dashboard',  label: 'Campus Overview',  icon: '🏫' },
-  { to: '/super-admin/students',   label: 'Students',         icon: '👥' },
-  { to: '/super-admin/staff',      label: 'Staff',            icon: '🧑‍💼' },
-  { to: '/super-admin/classes',    label: 'Classes',          icon: '📚' },
-  { to: '/super-admin/exams',      label: 'Examinations',     icon: '📝' },
-  { to: '/super-admin/certificates', label: 'Certificates',   icon: '🎓' },
+  { to: '/super-admin/dashboard',    label: 'Campus Overview', icon: '🏫' },
+  { to: '/super-admin/students',     label: 'Students',        icon: '👥' },
+  { to: '/super-admin/staff',        label: 'Staff',           icon: '🧑‍💼' },
+  { to: '/super-admin/classes',      label: 'Classes',         icon: '📚' },
+  { to: '/super-admin/exams',        label: 'Examinations',    icon: '📝' },
+  { to: '/super-admin/certificates', label: 'Certificates',    icon: '🎓' },
 
   {
     label: 'Finance',
@@ -110,6 +154,42 @@ const campusNavItems: PortalNavItem[] = [
   { to: '/super-admin/support',       label: 'Support',       icon: '🎫' },
 ]
 
+// ── Workspace badge ───────────────────────────────────────────────────────────
+// Appears above the nav items when in school or campus scope.
+// Displays the workspace type label, the current name, and an Exit button.
+function WorkspaceBadge() {
+  const { scopeType, selectedSchoolName, selectedCampusName, exitWorkspace } = useNavScope()
+  const isSchool = scopeType === 'school'
+  const workspaceName = isSchool ? selectedSchoolName : selectedCampusName
+
+  return (
+    <div className="space-y-1 mb-1">
+      {/* Workspace identity card */}
+      <div className="px-3 py-2.5 rounded-lg bg-[#192640] border border-[#2a3f5f]">
+        <p className="text-[9px] uppercase tracking-widest font-semibold opacity-50 text-[#A8B4CC] mb-0.5">
+          {isSchool ? 'School Workspace' : 'Campus Workspace'}
+        </p>
+        <p className="text-sm font-semibold text-white truncate leading-snug">
+          {workspaceName ?? '—'}
+        </p>
+      </div>
+
+      {/* Exit workspace */}
+      <button
+        onClick={exitWorkspace}
+        className={cn(
+          'w-full flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors text-left',
+          'text-[#A8B4CC] hover:bg-[#192640]',
+        )}
+      >
+        <span className="opacity-70">←</span>
+        <span>Exit to Network</span>
+      </button>
+    </div>
+  )
+}
+
+// ── Breadcrumb ────────────────────────────────────────────────────────────────
 function NavScopeBreadcrumb() {
   const { scopeType, selectedSchoolName, selectedCampusName } = useNavScope()
   if (scopeType === 'network') return null
@@ -123,24 +203,17 @@ function NavScopeBreadcrumb() {
   )
 }
 
+// ── Layout inner ──────────────────────────────────────────────────────────────
+// Must be inside NavScopeProvider so useNavScope() has context available.
 function SuperAdminLayoutInner() {
-  const { scopeType, selectNetwork } = useNavScope()
+  const { scopeType } = useNavScope()
 
-  const isCampusScope = scopeType === 'campus'
-  const navItems = isCampusScope ? campusNavItems : networkNavItems
-
-  const preNavContent = scopeType !== 'network' ? (
-    <button
-      onClick={selectNetwork}
-      className={cn(
-        'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left',
-        'text-[#A8B4CC] hover:bg-[#192640]',
-      )}
-    >
-      <span className="text-xs opacity-70">←</span>
-      <span>Back to Network</span>
-    </button>
-  ) : undefined
+  // Select the nav appropriate for the current workspace scope.
+  // Network and school scopes never show campus-operational modules.
+  const navItems =
+    scopeType === 'campus' ? campusNavItems :
+    scopeType === 'school' ? schoolNavItems :
+    networkNavItems
 
   return (
     <PortalLayout
@@ -148,7 +221,7 @@ function SuperAdminLayoutInner() {
       portalShortName="Super Admin"
       theme={theme}
       navItems={navItems}
-      preNavContent={preNavContent}
+      preNavContent={scopeType !== 'network' ? <WorkspaceBadge /> : undefined}
       extraSidebarContent={<NetworkTreeNav theme={theme} />}
       headerContextSlot={<NavScopeBreadcrumb />}
     />
