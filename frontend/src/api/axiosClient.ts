@@ -17,7 +17,7 @@ function pickDetail(err: AxiosError): string {
   if (Array.isArray(data?.errors)) return (data.errors as unknown[]).join(', ')
   if (data?.errors && typeof data.errors === 'object') {
     const flat: string[] = []
-    const errMap = data.errors as Record<string, unknown>
+    const errMap = data.errors as Record<string, string[]>
     for (const k of Object.keys(errMap)) {
       const v = errMap[k]
       if (Array.isArray(v)) flat.push(...v.map((m) => `${k}: ${m}`))
@@ -49,10 +49,17 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = []
 }
 
-// Public auth endpoints that authenticate via mfaChallengeToken or their own
-// credential scheme — never via the JWT Bearer token. The 401 refresh logic
-// must not run for these; doing so would wipe pending MFA state and cause
-// redirect/setup loops.
+// Public auth endpoints authenticate via their own credential scheme
+// (password, mfaChallengeToken) — never via JWT Bearer tokens.
+// The 401 refresh logic must skip these paths entirely; running it would:
+//   (a) always fail (no tokens exist during MFA pending state)
+//   (b) call authStore.clear() which destroys fams_pending_mfa, causing
+//       redirect/setup loops.
+//
+// Matching rules (applied to path relative to baseURL, query-string stripped):
+//   exact match   — path === pub
+//   prefix match  — path.startsWith(pub + '/') for non-slash-terminated pubs
+//   prefix match  — path.startsWith(pub) for slash-terminated pubs
 const PUBLIC_AUTH_PATHS = [
   '/auth/login',
   '/auth/refresh',
@@ -64,7 +71,11 @@ const PUBLIC_AUTH_PATHS = [
 
 function isPublicAuthEndpoint(url: string | undefined): boolean {
   if (!url) return false
-  return PUBLIC_AUTH_PATHS.some((p) => url.includes(p))
+  const path = url.split('?')[0]
+  return PUBLIC_AUTH_PATHS.some((pub) => {
+    if (pub.endsWith('/')) return path === pub.slice(0, -1) || path.startsWith(pub)
+    return path === pub || path.startsWith(pub + '/')
+  })
 }
 
 axiosClient.interceptors.response.use(
@@ -90,6 +101,8 @@ axiosClient.interceptors.response.use(
         return Promise.reject(error)
       }
 
+      // A refresh is already in progress — queue this request behind it.
+      // The queue is drained by processQueue() when the refresh resolves.
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject })
@@ -122,6 +135,8 @@ axiosClient.interceptors.response.use(
       }
 
       isRefreshing = true
+      authStore.setRefreshing(true)
+
       try {
         // Backend RefreshTokenCommand requires both tokens:
         // accessToken — to validate the expired JWT and extract userId
@@ -143,10 +158,11 @@ axiosClient.interceptors.response.use(
         return Promise.reject(refreshError)
       } finally {
         isRefreshing = false
+        authStore.setRefreshing(false)
       }
     }
 
-    // Auto-surface 4xx (except 401, which is handled above) and 5xx as toasts.
+    // Auto-surface 4xx (except 401, handled above) and 5xx as toasts.
     const skip = originalRequest?.headers?.[SKIP_HEADER]
     const status = error.response?.status
     if (!skip && status && status !== 401) {
@@ -164,8 +180,8 @@ axiosClient.interceptors.response.use(
 
 // When another tab silently refreshes the access token, localStorage fires a
 // 'storage' event in every *other* tab. Sync the default Authorization header
-// here so that the next request from this tab uses the new token without
-// triggering its own redundant refresh (which would fail — RT already rotated).
+// here so the next request from this tab uses the new token without triggering
+// its own redundant refresh (which would fail — RT already rotated).
 window.addEventListener('storage', (event) => {
   if (event.key !== 'access_token') return
   if (event.newValue) {

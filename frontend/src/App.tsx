@@ -147,36 +147,77 @@ const ParentResultsPage        = lazy(() => import('./pages/parent/ParentResults
 const ParentFeePage            = lazy(() => import('./pages/parent/ParentFeePage'))
 const ParentCommunicationsPage = lazy(() => import('./pages/parent/ParentCommunicationsPage'))
 
+// Resolves the correct portal landing path based on the current auth phase.
+// Used by both LoginGuard and MfaRouteGuard to redirect away from public pages.
 function RootRedirect() {
-  if (!authStore.isAuthenticated()) return <Navigate to="/login" replace />
+  const phase = authStore.getAuthPhase()
+
+  // No valid session — stay on the public page (caller handles the render).
+  if (phase === 'anonymous') return <Navigate to="/login" replace />
+
+  // Mid-refresh: show a neutral loading state. The interceptor will complete
+  // the refresh and the calling component will re-render with the new phase.
+  if (phase === 'refreshing') {
+    return (
+      <div className="flex h-screen items-center justify-center text-gray-500 text-sm">
+        Refreshing session…
+      </div>
+    )
+  }
+
+  // MFA in progress — send to the correct MFA step rather than the portal.
+  if (phase === 'mfa_pending') {
+    const p = authStore.getPendingMfa()
+    if (!p) return <Navigate to="/login" replace />
+    return <Navigate to={p.mfaEnrollmentRequired ? '/mfa/setup' : '/mfa/verify'} replace />
+  }
+
+  // 'authenticated' or 'expired' — navigate to the portal. Expired tokens are
+  // refreshed silently on the next API call; there is no need to block here.
   const { user } = authStore.getState()
   const portal = resolvePortal(user?.roles)
   return <Navigate to={landingPath(portal)} replace />
 }
 
-// Redirects already-authenticated users away from /login, and users in the
-// mfa_pending phase to the correct MFA page.
+// Redirects already-authenticated users away from /login and MFA pages,
+// and users in mfa_pending to the correct MFA step.
 function LoginGuard({ children }: { children: React.ReactNode }) {
   const phase = authStore.getAuthPhase()
-  if (phase === 'authenticated') return <RootRedirect />
+
+  // Authenticated (or expired — refresh will handle it) → go to portal.
+  if (phase === 'authenticated' || phase === 'expired') return <RootRedirect />
+
+  // Refreshing — show loading rather than flashing the login form.
+  if (phase === 'refreshing') return <RootRedirect />
+
   if (phase === 'mfa_pending') {
-    const p = authStore.getPendingMfa()!
+    const p = authStore.getPendingMfa()
+    // Safety: phase is mfa_pending but localStorage entry is missing/corrupted.
+    if (!p) return <>{children}</>
     return <Navigate to={p.mfaEnrollmentRequired ? '/mfa/setup' : '/mfa/verify'} replace />
   }
+
   return <>{children}</>
 }
 
-// Guards /mfa/setup and /mfa/verify: authenticated → dashboard, anonymous → login,
-// wrong MFA step → correct MFA step.
+// Guards /mfa/setup and /mfa/verify.
+// authenticated → portal, anonymous/refreshing → /login, wrong MFA step → correct step.
 function MfaRouteGuard({ enrollment, children }: { enrollment: boolean; children: React.ReactNode }) {
   const phase = authStore.getAuthPhase()
-  if (phase === 'authenticated') return <RootRedirect />
-  if (phase === 'anonymous') return <Navigate to="/login" replace />
+
+  if (phase === 'authenticated' || phase === 'expired') return <RootRedirect />
+
+  // Refreshing or anonymous — both map to /login. Refreshing is an edge case
+  // (the MFA pages don't hold JWT tokens) but it's safer than leaving it unhandled.
+  if (phase === 'anonymous' || phase === 'refreshing') return <Navigate to="/login" replace />
+
   const p = authStore.getPendingMfa()
   // Safety: phase is mfa_pending but localStorage entry is missing/corrupted.
   if (!p) return <Navigate to="/login" replace />
+
   if (enrollment && !p.mfaEnrollmentRequired) return <Navigate to="/mfa/verify" replace />
   if (!enrollment && p.mfaEnrollmentRequired) return <Navigate to="/mfa/setup" replace />
+
   return <>{children}</>
 }
 
