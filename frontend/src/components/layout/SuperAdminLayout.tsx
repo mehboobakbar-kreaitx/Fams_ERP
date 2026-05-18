@@ -13,156 +13,54 @@ const theme: PortalTheme = {
   avatarBg: 'bg-red-600',
 }
 
-// All 15 enterprise modules mapped to routes/groups.
+// Network-level governance nav — Super Admin sees the NETWORK, not campus operations.
+// Campus-operational modules (HRM, Finance, Payroll, Procurement, Assets, Transport,
+// Library, Hostel, Communication) belong to the Campus Portal, not here.
 const navItems: PortalNavItem[] = [
-  // 1. Dashboard & Analytics
-  { to: '/super-admin/dashboard', label: 'Dashboard', icon: '🏠' },
+  // 1. Network Dashboard
+  { to: '/super-admin/dashboard', label: 'Network Dashboard', icon: '🌐' },
 
-  // 2. Institution Management
+  // 2. Institution Management — schools, campuses, billing (network governance)
   {
     label: 'Institution Management',
     icon: '🏛️',
     defaultOpen: true,
     children: [
-      { to: '/super-admin/schools',        label: 'Schools',       icon: '🏛️' },
-      { to: '/super-admin/campuses',       label: 'Campuses',      icon: '🏫' },
-      { to: '/super-admin/students',       label: 'Students',      icon: '👥' },
-      { to: '/super-admin/subscriptions',  label: 'Subscriptions', icon: '💳' },
+      { to: '/super-admin/schools',       label: 'Schools',       icon: '🏛️' },
+      { to: '/super-admin/campuses',      label: 'Campuses',      icon: '🏫' },
+      { to: '/super-admin/subscriptions', label: 'Subscriptions', icon: '💳' },
     ],
   },
 
-  // 3. Academic Management
+  // 3. Network Analytics — cross-campus and KPI views only (not per-campus ops)
   {
-    label: 'Academic Management',
-    icon: '📚',
-    children: [
-      { to: '/super-admin/classes',      label: 'Classes & Sections', icon: '🏛️' },
-      { to: '/super-admin/exams',        label: 'Examinations',       icon: '📝' },
-      { to: '/super-admin/certificates', label: 'Certificates',       icon: '🎓' },
-    ],
-  },
-
-  // 4. Staff & HRM
-  {
-    label: 'Staff & HRM',
-    icon: '👤',
-    children: [
-      { to: '/super-admin/staff', label: 'Staff Directory', icon: '👤' },
-    ],
-  },
-
-  // 5. Finance & Accounting
-  {
-    label: 'Finance & Accounting',
-    icon: '💰',
-    children: [
-      { to: '/super-admin/finance',          label: 'Institution Finance',  icon: '💰' },
-      { to: '/super-admin/finance/reports',  label: 'Financial Reports',    icon: '📈' },
-    ],
-  },
-
-  // 8. Payroll & Salaries
-  {
-    label: 'Payroll & Salaries',
-    icon: '💵',
-    children: [
-      { to: '/super-admin/payroll',  label: 'Payroll Dashboard', icon: '🏠' },
-    ],
-  },
-
-  // 6. Vendor & Procurement
-  {
-    label: 'Vendor & Procurement',
-    icon: '🛒',
-    children: [
-      { to: '/super-admin/procurement',          label: 'Procurement Dashboard', icon: '🏠' },
-      { to: '/super-admin/procurement/vendors',  label: 'Vendors',               icon: '🏢' },
-      { to: '/super-admin/procurement/requests', label: 'Purchase Requests',     icon: '📋' },
-      { to: '/super-admin/procurement/orders',   label: 'Purchase Orders',       icon: '🛒' },
-      { to: '/super-admin/procurement/reports',  label: 'Procurement Reports',   icon: '📊' },
-    ],
-  },
-
-  // 7. Asset & Inventory
-  {
-    label: 'Asset & Inventory',
-    icon: '📦',
-    children: [
-      { to: '/super-admin/assets',             label: 'Asset Dashboard',  icon: '🏠' },
-      { to: '/super-admin/assets/registry',    label: 'Asset Registry',   icon: '🗂️' },
-      { to: '/super-admin/assets/inventory',   label: 'Inventory Stock',  icon: '📦' },
-      { to: '/super-admin/assets/transfers',   label: 'Transfers',         icon: '🔄' },
-      { to: '/super-admin/assets/audit',       label: 'Audit Logs',        icon: '🔒' },
-    ],
-  },
-
-  // 9. Transport
-  {
-    label: 'Transport',
-    icon: '🚌',
-    children: [
-      { to: '/super-admin/transport', label: 'Transport Management', icon: '🚌' },
-    ],
-  },
-
-  // 10. Library
-  {
-    label: 'Library',
-    icon: '📚',
-    children: [
-      { to: '/super-admin/library', label: 'Library Management', icon: '📚' },
-    ],
-  },
-
-  // 11. Hostel
-  {
-    label: 'Hostel',
-    icon: '🏨',
-    children: [
-      { to: '/super-admin/hostel', label: 'Hostel Management', icon: '🏨' },
-    ],
-  },
-
-  // 12. Communication & Engagement
-  {
-    label: 'Communication',
-    icon: '💬',
-    children: [
-      { to: '/super-admin/notifications', label: 'Notifications',   icon: '🔔' },
-      { to: '/super-admin/messaging',     label: 'SMS & Email',     icon: '📧' },
-      { to: '/super-admin/support',       label: 'Support Tickets', icon: '🎫' },
-    ],
-  },
-
-  // 13. Reports & Analytics  /  14. Security & Compliance
-  {
-    label: 'Reports & Analytics',
+    label: 'Network Analytics',
     icon: '📊',
     children: [
-      { to: '/super-admin/reports',                label: 'Reports Hub',        icon: '📊' },
-      { to: '/super-admin/reports/academic',       label: 'Academic Reports',   icon: '📚' },
-      { to: '/super-admin/reports/attendance',     label: 'Attendance',         icon: '📅' },
-      { to: '/super-admin/reports/campus-kpi',     label: 'Campus KPIs',        icon: '🏆' },
-      { to: '/super-admin/reports/cross-campus',   label: 'Cross-Campus',       icon: '🌐' },
-      { to: '/super-admin/reports/operational',    label: 'Operational',        icon: '⚙️' },
+      { to: '/super-admin/reports',               label: 'Analytics Hub',        icon: '📊' },
+      { to: '/super-admin/reports/cross-campus',  label: 'Cross-Campus',         icon: '🌐' },
+      { to: '/super-admin/reports/campus-kpi',    label: 'Campus KPIs',          icon: '🏆' },
+      { to: '/super-admin/reports/academic',      label: 'Academic Overview',    icon: '📚' },
+      { to: '/super-admin/reports/attendance',    label: 'Attendance Overview',  icon: '📅' },
+      { to: '/super-admin/reports/operational',   label: 'Operational Overview', icon: '⚙️' },
     ],
   },
 
-  // 14. Security & Compliance
+  // 4. Audit & Compliance — platform-wide security governance
   {
-    label: 'Security & Compliance',
+    label: 'Audit & Compliance',
     icon: '🛡️',
     children: [
-      { to: '/super-admin/security',              label: 'Security Dashboard',  icon: '🛡️' },
-      { to: '/super-admin/security/roles',        label: 'Roles & Permissions', icon: '🔐' },
-      { to: '/super-admin/security/mfa',          label: 'MFA Management',      icon: '🔑' },
-      { to: '/super-admin/security/activity',     label: 'Activity Monitor',    icon: '👁️' },
-      { to: '/super-admin/security/compliance',   label: 'Compliance Logs',     icon: '📋' },
-      { to: '/super-admin/audit',                 label: 'Audit Logs',          icon: '🔒' },
+      { to: '/super-admin/security',            label: 'Security Overview',   icon: '🛡️' },
+      { to: '/super-admin/security/roles',      label: 'Roles & Permissions', icon: '🔐' },
+      { to: '/super-admin/security/mfa',        label: 'MFA Management',      icon: '🔑' },
+      { to: '/super-admin/security/activity',   label: 'Activity Monitor',    icon: '👁️' },
+      { to: '/super-admin/security/compliance', label: 'Compliance Logs',     icon: '📋' },
+      { to: '/super-admin/audit',               label: 'Audit Logs',          icon: '🔒' },
     ],
   },
 
-  // 15. System Configuration
+  // 5. System Configuration
   { to: '/super-admin/config', label: 'System Config', icon: '⚙️' },
 ]
 

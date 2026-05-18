@@ -214,39 +214,12 @@ export default function App() {
             }
           >
             <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
-            <Route path="/super-admin/dashboard" element={<SuperAdminDashboard />} />
-            <Route path="/super-admin/schools"   element={<SchoolsPage />} />
-            <Route path="/super-admin/campuses"  element={<CampusesPage />} />
-            <Route path="/super-admin/students"  element={<StudentsPage />} />
-            <Route path="/super-admin/staff"     element={<StaffPage />} />
-            <Route path="/super-admin/finance"         element={<InstitutionFinancePage />} />
+            <Route path="/super-admin/dashboard"       element={<SuperAdminDashboard />} />
+            <Route path="/super-admin/schools"         element={<SchoolsPage />} />
+            <Route path="/super-admin/campuses"        element={<CampusesPage />} />
             <Route path="/super-admin/subscriptions"   element={<SubscriptionPage />} />
-            <Route path="/super-admin/audit"     element={<AuditLogPage />} />
-            <Route path="/super-admin/config"    element={<SystemConfigPage />} />
-            {/* Academic Management placeholders */}
-            <Route path="/super-admin/classes"      element={<Placeholder title="Classes & Sections" />} />
-            <Route path="/super-admin/exams"        element={<Placeholder title="Examinations" />} />
-            <Route path="/super-admin/certificates" element={<Placeholder title="Certificates" />} />
-            {/* New module placeholders — will be implemented in future sprints */}
-            <Route path="/super-admin/payroll"          element={<PayrollDashboard />} />
-            <Route path="/super-admin/finance/reports"   element={<FinancialReportsPage />} />
-            <Route path="/super-admin/procurement"              element={<ProcurementDashboard />} />
-            <Route path="/super-admin/procurement/vendors"     element={<VendorsPage />} />
-            <Route path="/super-admin/procurement/requests"    element={<PurchaseRequestsPage />} />
-            <Route path="/super-admin/procurement/orders"      element={<PurchaseOrdersPage />} />
-            <Route path="/super-admin/procurement/reports"     element={<ProcurementReportsPage />} />
-            <Route path="/super-admin/assets"               element={<AssetDashboard />} />
-            <Route path="/super-admin/assets/registry"     element={<AssetRegistryPage />} />
-            <Route path="/super-admin/assets/inventory"    element={<InventoryStockPage />} />
-            <Route path="/super-admin/assets/transfers"    element={<TransfersPage />} />
-            <Route path="/super-admin/assets/audit"        element={<AssetAuditPage />} />
-            <Route path="/super-admin/transport"      element={<TransportPage />} />
-            <Route path="/super-admin/library"       element={<LibraryPage />} />
-            <Route path="/super-admin/hostel"        element={<HostelPage />} />
-            <Route path="/super-admin/crm"           element={<NotificationsPage />} />
-            <Route path="/super-admin/notifications" element={<NotificationsPage />} />
-            <Route path="/super-admin/messaging"     element={<MessagingPage />} />
-            <Route path="/super-admin/support"       element={<SupportTicketsPage />} />
+            <Route path="/super-admin/audit"           element={<AuditLogPage />} />
+            <Route path="/super-admin/config"          element={<SystemConfigPage />} />
             {/* Security & Compliance */}
             <Route path="/super-admin/security"                  element={<SecurityDashboard />} />
             <Route path="/super-admin/security/roles"            element={<RolesPermissionsPage />} />
