@@ -1,4 +1,5 @@
 import { cn } from '../../lib/utils'
+import { useNavigate } from 'react-router-dom'
 import PortalLayout, { type PortalNavItem, type PortalTheme } from './PortalLayout'
 import { NavScopeProvider, useNavScope } from '../../store/navScopeStore'
 import { NetworkTreeNav } from './NetworkTreeNav'
@@ -208,6 +209,7 @@ const campusNavItems: PortalNavItem[] = [
 // Appears above the nav items when in school or campus scope.
 // Displays the workspace type label, the current name, and an Exit button.
 function WorkspaceBadge() {
+  const navigate = useNavigate()
   const { scopeType, selectedSchoolName, selectedCampusName, exitWorkspace } = useNavScope()
   const isSchool = scopeType === 'school'
   const workspaceName = isSchool ? selectedSchoolName : selectedCampusName
@@ -226,7 +228,7 @@ function WorkspaceBadge() {
 
       {/* Back to network */}
       <button
-        onClick={exitWorkspace}
+        onClick={() => { exitWorkspace(); navigate('/super-admin/dashboard') }}
         className={cn(
           'w-full flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors text-left',
           'text-[#A8B4CC] hover:bg-[#192640]',

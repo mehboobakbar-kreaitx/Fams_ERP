@@ -32,6 +32,7 @@ export function NetworkTreeNav({ theme }: Props) {
     selectedCampusId,
     selectNetwork,
     selectSchool,
+    enterCampus,
   } = useNavScope()
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -80,7 +81,7 @@ export function NetworkTreeNav({ theme }: Props) {
 
       {/* Network root — clicking exits any active workspace */}
       <button
-        onClick={selectNetwork}
+        onClick={() => { selectNetwork(); navigate('/super-admin/dashboard') }}
         className={cn(
           'w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left',
           scopeType === 'network' ? theme.sidebarActiveBg : cn(theme.sidebarMutedText, theme.sidebarHoverBg),
@@ -123,6 +124,7 @@ export function NetworkTreeNav({ theme }: Props) {
               <button
                 onClick={() => {
                   selectSchool(school.id, school.name)
+                  navigate('/super-admin/dashboard')
                   if (!isOpen) toggle(school.id)
                 }}
                 className={cn(
@@ -172,7 +174,10 @@ export function NetworkTreeNav({ theme }: Props) {
                   return (
                     <button
                       key={campus.id}
-                      onClick={() => navigate(`/super-admin/workspace/campus/${campus.id}`)}
+                      onClick={() => {
+                        enterCampus(campus.id, campus.name, school.id, school.name)
+                        navigate('/super-admin/dashboard')
+                      }}
                       className={cn(
                         'group w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors text-left',
                         isCampusActive
