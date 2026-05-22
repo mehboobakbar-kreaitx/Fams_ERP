@@ -45,8 +45,15 @@ export default function Login() {
 
       authStore.setSessionFromLogin(data, email)
       navigate(authenticatedLandingPath(data.roles, data.campusId))
-    } catch {
-      setError('Invalid email or password.')
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 401 || status === 400) {
+        setError('Invalid email or password.')
+      } else if (!status) {
+        setError('Cannot reach the server. Check your connection and try again.')
+      } else {
+        setError('Sign-in failed. Please try again or contact support.')
+      }
     } finally {
       setLoading(false)
     }

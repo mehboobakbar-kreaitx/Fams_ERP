@@ -97,7 +97,10 @@ export default function ReportsDashboard() {
   const summaryQuery = useQuery({
     queryKey: ['reports-summary'],
     queryFn: async () => {
-      const res = await axiosClient.get<ReportSummary>('/reports/summary')
+      const res = await axiosClient.get<ReportSummary>('/reports/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
     retry: false,

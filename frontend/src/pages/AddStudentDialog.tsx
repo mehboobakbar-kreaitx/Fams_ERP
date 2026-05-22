@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { axiosClient } from '../api/axiosClient'
 import Modal from '../components/ui/Modal'
+import { authStore } from '../store/authStore'
 
 type Student = {
   id: string
@@ -84,6 +85,10 @@ export default function AddStudentDialog({ open, onClose }: Props) {
     mutationFn: async () => {
       const sec = sectionOptions.find((s) => s.sectionId === form.sectionId)
       if (!sec) throw new Error('Select a section before saving.')
+      const campusId = authStore.getState().user?.campusId
+      if (!campusId || campusId === '00000000-0000-0000-0000-000000000000') {
+        throw new Error('No campus context. Please refresh your session and try again.')
+      }
       const payload = {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -99,7 +104,7 @@ export default function AddStudentDialog({ open, onClose }: Props) {
         rollNumber: form.rollNumber.trim(),
         emergencyContactName: form.emergencyContactName.trim() || form.fatherName.trim(),
         emergencyContactPhone: form.emergencyContactPhone.trim() || form.phone.trim(),
-        campusId: '00000000-0000-0000-0000-000000000000',
+        campusId,
       }
       const { data } = await axiosClient.post<string>('/students', payload, {
         headers: { 'x-skip-error-toast': '1' },

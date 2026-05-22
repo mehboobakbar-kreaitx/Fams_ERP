@@ -54,7 +54,10 @@ export default function SecurityDashboard() {
   const summaryQuery = useQuery({
     queryKey: ['security-summary'],
     queryFn: async () => {
-      const res = await axiosClient.get<SecuritySummary>('/security/summary')
+      const res = await axiosClient.get<SecuritySummary>('/security/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
     retry: false,
@@ -63,7 +66,10 @@ export default function SecurityDashboard() {
   const eventsQuery = useQuery({
     queryKey: ['security-recent-events'],
     queryFn: async () => {
-      const res = await axiosClient.get<SecurityEvent[]>('/security/events/recent')
+      const res = await axiosClient.get<SecurityEvent[]>('/security/events/recent', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return Array.isArray(res.data) ? res.data : []
     },
     retry: false,
@@ -115,7 +121,9 @@ export default function SecurityDashboard() {
         {/* Recent events */}
         <div>
           <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Recent Security Events</h2>
-          {events.length === 0 && !eventsQuery.isLoading ? (
+          {eventsQuery.isLoading ? (
+            <p className="text-sm text-muted-foreground">Loading events…</p>
+          ) : eventsQuery.isError || events.length === 0 ? (
             <div className="bg-gray-50 border border-border rounded-xl p-4 text-sm text-muted-foreground">
               No recent events. Security monitoring will appear once the backend is deployed.
             </div>

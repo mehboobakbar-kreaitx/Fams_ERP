@@ -27,38 +27,51 @@ export default function ParentDashboard() {
   const dash = useQuery({
     queryKey: ['parent-dashboard'],
     queryFn: async () => {
-      const res = await axiosClient.get<ParentDashboardDto>('/dashboard/parent')
+      const res = await axiosClient.get<ParentDashboardDto>('/dashboard/parent', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
+    retry: false,
   })
+
+  const d = dash.data
 
   return (
     <div>
       <h2 className="text-2xl font-semibold text-gray-900">
-        Welcome{dash.data?.parentName ? `, ${dash.data.parentName}` : ''}!
+        Welcome{d?.parentName ? `, ${d.parentName}` : ''}!
       </h2>
       <p className="text-sm text-muted-foreground mb-6">Your children's academic snapshot.</p>
 
+      {dash.isError && (
+        <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+          Could not load dashboard data. Please refresh to try again.
+        </p>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <KpiCard label="Children" value={dash.data?.childrenCount ?? 0} icon="👨‍👩‍👧" />
+        <KpiCard label="Children" value={d?.childrenCount ?? '—'} icon="👨‍👩‍👧" />
         <KpiCard
           label="Total Outstanding Fees"
-          value={dash.data ? formatCurrency(dash.data.totalOutstandingFees) : '—'}
-          trend={dash.data && dash.data.totalOutstandingFees > 0 ? 'down' : 'neutral'}
+          value={d ? formatCurrency(d.totalOutstandingFees) : '—'}
+          trend={d && d.totalOutstandingFees > 0 ? 'down' : 'neutral'}
           icon="💰"
         />
         <KpiCard
           label="Published Results"
-          value={dash.data?.children.reduce((s, c) => s + c.publishedResultsThisTerm, 0) ?? 0}
+          value={d?.children.reduce((s, c) => s + c.publishedResultsThisTerm, 0) ?? '—'}
           icon="📊"
         />
       </div>
 
-      {dash.isLoading && <p className="text-muted-foreground">Loading…</p>}
-      {dash.isError && <p className="text-red-600">Could not load dashboard.</p>}
+      {dash.isLoading && (
+        <p className="text-sm text-muted-foreground mb-4">Loading children's data…</p>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {(dash.data?.children ?? []).map((c) => (
+        {(d?.children ?? []).map((c) => (
           <div key={c.studentId} className="bg-white border border-border rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <div>

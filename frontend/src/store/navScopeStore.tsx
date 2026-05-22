@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
 
 // Canonical workspace mode type. 'network' = platform governance view with no
 // campus selected. 'school' = a specific school is selected, school-scoped
@@ -41,27 +41,27 @@ const NETWORK: NavScopeState = {
 export function NavScopeProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<NavScopeState>(NETWORK)
 
-  const selectNetwork = () => setState(NETWORK)
+  const selectNetwork = useCallback(() => setState(NETWORK), [])
 
-  const selectSchool = (id: string, name: string) =>
+  const selectSchool = useCallback((id: string, name: string) =>
     setState({
       scopeType: 'school',
       selectedSchoolId: id,
       selectedSchoolName: name,
       selectedCampusId: null,
       selectedCampusName: null,
-    })
+    }), [])
 
-  const selectCampus = (id: string, name: string, schoolId: string, schoolName: string) =>
+  const selectCampus = useCallback((id: string, name: string, schoolId: string, schoolName: string) =>
     setState({
       scopeType: 'campus',
       selectedSchoolId: schoolId,
       selectedSchoolName: schoolName,
       selectedCampusId: id,
       selectedCampusName: name,
-    })
+    }), [])
 
-  const value: NavScopeContextValue = {
+  const value = useMemo<NavScopeContextValue>(() => ({
     ...state,
     currentWorkspaceMode: state.scopeType,
     selectNetwork,
@@ -71,7 +71,7 @@ export function NavScopeProvider({ children }: { children: ReactNode }) {
     enterCampus: selectCampus,
     selectCampus,
     exitWorkspace: selectNetwork,
-  }
+  }), [state, selectNetwork, selectSchool, selectCampus])
 
   return <NavScopeContext.Provider value={value}>{children}</NavScopeContext.Provider>
 }

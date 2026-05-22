@@ -44,7 +44,10 @@ export default function FinanceDashboard() {
   const summaryQuery = useQuery({
     queryKey: ['finance-dashboard'],
     queryFn: async () => {
-      const res = await axiosClient.get<FinanceSummary>('/finance/summary')
+      const res = await axiosClient.get<FinanceSummary>('/finance/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
     retry: false,
@@ -55,8 +58,10 @@ export default function FinanceDashboard() {
     queryFn: async () => {
       const res = await axiosClient.get<RecentTransaction[]>('/finance/recent-transactions', {
         params: { limit: 8 },
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
       })
-      return res.data
+      return Array.isArray(res.data) ? res.data : []
     },
     retry: false,
   })

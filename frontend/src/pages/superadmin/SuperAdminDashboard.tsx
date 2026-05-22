@@ -67,31 +67,49 @@ export default function SuperAdminDashboard() {
   const dashQuery = useQuery({
     queryKey: ['dashboard-executive'],
     queryFn: async () => {
-      const res = await axiosClient.get<ExecutiveDashboardDto>('/dashboard/executive')
+      const res = await axiosClient.get<ExecutiveDashboardDto>('/dashboard/executive', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
+    retry: false,
   })
 
   // Needed to cross-reference campusId → schoolId for school-scope filtering.
   const campusListQuery = useQuery({
     queryKey: ['tree-campuses'],
     queryFn: async () => {
-      const res = await axiosClient.get<CampusListItem[]>('/campuses')
-      return res.data
+      const res = await axiosClient.get<CampusListItem[]>('/campuses', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
+      return Array.isArray(res.data) ? res.data : []
     },
     staleTime: 2 * 60_000,
+    retry: false,
     enabled: scopeType === 'school',
   })
 
-  if (dashQuery.isLoading || !dashQuery.data) {
+  if (dashQuery.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-gray-500">Loading dashboard…</div>
       </div>
     )
   }
-  if (dashQuery.isError) {
-    return <div className="text-red-600">Failed to load dashboard.</div>
+
+  if (dashQuery.isError || !dashQuery.data) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-red-600 font-medium">Failed to load dashboard.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {dashQuery.isError
+            ? 'The executive dashboard API is not yet available or returned an error.'
+            : 'Dashboard returned no data.'}
+        </p>
+      </div>
+    )
   }
 
   const all = dashQuery.data

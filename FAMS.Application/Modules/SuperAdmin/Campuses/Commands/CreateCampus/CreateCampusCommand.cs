@@ -1,8 +1,10 @@
 using FAMS.Application.Common.Models;
+using FAMS.Application.Common.Security;
 using MediatR;
 
 namespace FAMS.Application.Modules.SuperAdmin.Campuses.Commands.CreateCampus;
 
+[Authorize(Roles = "SystemAdmin")]
 public record CreateCampusCommand(
     string Name,
     string Code,

@@ -55,9 +55,12 @@ public class CreateCampusCommandHandler : IRequestHandler<CreateCampusCommand, R
         _db.Campuses.Add(campus);
         await _db.SaveChangesAsync(cancellationToken);
 
-        // If the caller has no campus yet (first setup), bind them to this new campus
-        // so their next token refresh carries the correct CampusId.
-        if (_currentUser.UserId is not null && _currentUser.CampusId == Guid.Empty)
+        // Bind the caller to this campus on first-time setup — but only for school-scoped users
+        // (e.g., a new Principal with no campus yet). SystemAdmin must keep CampusId = Guid.Empty
+        // so RLS and token claims remain network-wide; assigning them to a campus would scope
+        // their next JWT to a single campus and break cross-campus visibility.
+        var callerIsSystemAdmin = _currentUser.Roles.Contains("SystemAdmin");
+        if (_currentUser.UserId is not null && _currentUser.CampusId == Guid.Empty && !callerIsSystemAdmin)
             await _identity.UpdateCampusIdAsync(_currentUser.UserId, campus.Id);
 
         return Result<Guid>.Success(campus.Id);

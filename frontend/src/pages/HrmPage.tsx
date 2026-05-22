@@ -45,6 +45,12 @@ export default function HrmPage() {
         Staff management, recruitment, leave, payroll oversight and workforce analytics.
       </p>
 
+      {analyticsQuery.isError && (
+        <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+          HR analytics not yet available. KPI figures will appear once the HRM backend module is deployed.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <KpiCard label="Total Staff" value={a?.totalStaff ?? '—'} icon="👤" />
         <KpiCard label="Active" value={a?.activeStaff ?? '—'} trend="up" icon="✅" />

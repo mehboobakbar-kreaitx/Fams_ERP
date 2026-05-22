@@ -17,8 +17,9 @@ public class AuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
 
     public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
     {
+        // AuthorizeAttribute is declared Inherited = false; use inherit: false to match.
         var authorizeAttributes = request.GetType()
-            .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: true)
+            .GetCustomAttributes(typeof(AuthorizeAttribute), inherit: false)
             .Cast<AuthorizeAttribute>()
             .ToList();
 
@@ -36,8 +37,9 @@ public class AuthorizationBehavior<TRequest, TResponse> : IPipelineBehavior<TReq
         if (requiredRoles.Count > 0)
         {
             var userRoles = _currentUser.Roles.ToList();
+            // Authenticated but lacks required role → 403 Forbidden, not 401.
             if (!requiredRoles.Any(r => userRoles.Contains(r)))
-                throw new UnauthorizedException($"User does not have any of the required roles: {string.Join(", ", requiredRoles)}");
+                throw new UnauthorizedAccessException($"User does not have any of the required roles: {string.Join(", ", requiredRoles)}");
         }
 
         return await next();

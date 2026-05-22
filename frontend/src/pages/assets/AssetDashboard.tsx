@@ -29,7 +29,10 @@ export default function AssetDashboard() {
   const summaryQuery = useQuery({
     queryKey: ['asset-summary'],
     queryFn: async () => {
-      const res = await axiosClient.get<AssetSummary>('/assets/summary')
+      const res = await axiosClient.get<AssetSummary>('/assets/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
     retry: false,

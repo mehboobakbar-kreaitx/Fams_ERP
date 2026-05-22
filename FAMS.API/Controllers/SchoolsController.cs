@@ -47,6 +47,7 @@ public class SchoolsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Create([FromBody] CreateSchoolCommand command)
     {
         var result = await _mediator.Send(command);
@@ -62,6 +63,7 @@ public class SchoolsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateSchoolBody body)
     {
         var result = await _mediator.Send(new UpdateSchoolCommand(
@@ -70,6 +72,7 @@ public class SchoolsController : ControllerBase
     }
 
     [HttpPatch("{id:guid}/status")]
+    [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> ToggleStatus(Guid id, [FromBody] ToggleStatusBody body)
     {
         var result = await _mediator.Send(new ToggleSchoolStatusCommand(id, body.IsActive));
@@ -77,6 +80,7 @@ public class SchoolsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "SystemAdmin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _mediator.Send(new DeleteSchoolCommand(id));

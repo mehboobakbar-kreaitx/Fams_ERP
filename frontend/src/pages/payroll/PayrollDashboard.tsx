@@ -46,7 +46,10 @@ export default function PayrollDashboard() {
   const summaryQuery = useQuery({
     queryKey: ['payroll-dashboard'],
     queryFn: async () => {
-      const res = await axiosClient.get<PayrollSummary>('/payroll/summary')
+      const res = await axiosClient.get<PayrollSummary>('/payroll/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
     retry: false,
@@ -66,6 +69,12 @@ export default function PayrollDashboard() {
       <p className="text-sm text-muted-foreground mb-6">
         End-to-end payroll processing — from salary structures to disbursement.
       </p>
+
+      {summaryQuery.isError && (
+        <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+          Payroll summary API not yet available. KPI figures will appear once the backend module is deployed.
+        </p>
+      )}
 
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

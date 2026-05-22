@@ -30,11 +30,23 @@ function pickDetail(err: AxiosError): string {
 export const axiosClient = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  // Prevent infinite hangs on unresponsive backends. Individual calls may
+  // override this (e.g. dashboard queries use 15_000; heavy mutations may use more).
+  timeout: 20_000,
 })
 
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // Silence auto-toast for all read (GET) requests. Components use isError /
+  // isLoading to show their own inline feedback; a floating toast for a 404
+  // from an unimplemented endpoint would be confusing noise.
+  // POST / PUT / DELETE mutations are left untouched — their error toasts are useful.
+  if ((config.method ?? 'get').toLowerCase() === 'get') {
+    config.headers[SKIP_HEADER] = '1'
+  }
+
   return config
 })
 

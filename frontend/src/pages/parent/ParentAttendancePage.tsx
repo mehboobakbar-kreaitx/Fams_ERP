@@ -18,6 +18,7 @@ export default function ParentAttendancePage() {
       const res = await axiosClient.get<ParentDashboardDto>('/dashboard/parent')
       return res.data
     },
+    retry: false,
   })
 
   return (
@@ -25,7 +26,20 @@ export default function ParentAttendancePage() {
       <h1 className="text-2xl font-semibold text-gray-900 mb-1">Attendance</h1>
       <p className="text-sm text-muted-foreground mb-6">Last 30 days attendance per child.</p>
 
+      {dash.isError && (
+        <p className="text-amber-600 text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+          Could not load attendance data. Please refresh to try again.
+        </p>
+      )}
+
+      {dash.isLoading && (
+        <p className="text-sm text-muted-foreground mb-4">Loading attendance…</p>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {!dash.isLoading && !dash.isError && (dash.data?.children ?? []).length === 0 && (
+          <p className="text-sm text-muted-foreground col-span-2">No children linked to this account.</p>
+        )}
         {(dash.data?.children ?? []).map((c) => {
           const pct = c.attendancePercentLast30Days
           const cls = pct >= 90 ? 'bg-emerald-500' : pct >= 75 ? 'bg-amber-500' : 'bg-red-500'

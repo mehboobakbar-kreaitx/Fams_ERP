@@ -29,7 +29,10 @@ export default function ProcurementDashboard() {
   const summaryQuery = useQuery({
     queryKey: ['procurement-summary'],
     queryFn: async () => {
-      const res = await axiosClient.get<ProcurementSummary>('/procurement/summary')
+      const res = await axiosClient.get<ProcurementSummary>('/procurement/summary', {
+        headers: { 'x-skip-error-toast': '1' },
+        timeout: 15_000,
+      })
       return res.data
     },
     retry: false,
