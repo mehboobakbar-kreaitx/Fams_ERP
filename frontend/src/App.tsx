@@ -115,14 +115,15 @@ const HrmResignationsPage   = lazy(() => import('./pages/hrm/ResignationsPage'))
 const HrmReportsPage        = lazy(() => import('./pages/hrm/HrmReportsPage'))
 
 // Super Admin portal pages
-const SuperAdminDashboard = lazy(() => import('./pages/superadmin/SuperAdminDashboard'))
-const SubscriptionPage    = lazy(() => import('./pages/superadmin/SubscriptionPage'))
-const SchoolsPage         = lazy(() => import('./pages/superadmin/SchoolsPage'))
-const CampusesPage        = lazy(() => import('./pages/superadmin/CampusesPage'))
-const SystemConfigPage    = lazy(() => import('./pages/superadmin/SystemConfigPage'))
-const StaffPage           = lazy(() => import('./pages/superadmin/StaffPage'))
+const SuperAdminDashboard    = lazy(() => import('./pages/superadmin/SuperAdminDashboard'))
+const CampusWorkspaceLoader  = lazy(() => import('./pages/superadmin/CampusWorkspaceLoader'))
+const SubscriptionPage       = lazy(() => import('./pages/superadmin/SubscriptionPage'))
+const SchoolsPage            = lazy(() => import('./pages/superadmin/SchoolsPage'))
+const CampusesPage           = lazy(() => import('./pages/superadmin/CampusesPage'))
+const SystemConfigPage       = lazy(() => import('./pages/superadmin/SystemConfigPage'))
+const StaffPage              = lazy(() => import('./pages/superadmin/StaffPage'))
 const InstitutionFinancePage = lazy(() => import('./pages/superadmin/FinancePage'))
-const AuditLogPage        = lazy(() => import('./pages/superadmin/AuditLogPage'))
+const AuditLogPage           = lazy(() => import('./pages/superadmin/AuditLogPage'))
 
 // Teacher portal pages
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'))
@@ -256,6 +257,9 @@ export default function App() {
           >
             <Route path="/super-admin" element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="/super-admin/dashboard"       element={<SuperAdminDashboard />} />
+
+            {/* Workspace activation — reads :campusId, hydrates navScope, redirects to dashboard */}
+            <Route path="/super-admin/workspace/campus/:campusId" element={<CampusWorkspaceLoader />} />
 
             {/* Network governance */}
             <Route path="/super-admin/schools"         element={<SchoolsPage />} />

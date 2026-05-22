@@ -217,14 +217,14 @@ function WorkspaceBadge() {
       {/* Workspace identity card */}
       <div className="px-3 py-2.5 rounded-lg bg-[#192640] border border-[#2a3f5f]">
         <p className="text-[9px] uppercase tracking-widest font-semibold opacity-50 text-[#A8B4CC] mb-0.5">
-          {isSchool ? 'School Workspace' : 'Campus Workspace'}
+          Current Workspace
         </p>
         <p className="text-sm font-semibold text-white truncate leading-snug">
           {workspaceName ?? '—'}
         </p>
       </div>
 
-      {/* Exit workspace */}
+      {/* Back to network */}
       <button
         onClick={exitWorkspace}
         className={cn(
@@ -233,7 +233,7 @@ function WorkspaceBadge() {
         )}
       >
         <span className="opacity-70">←</span>
-        <span>Exit to Network</span>
+        <span>Back to Network</span>
       </button>
     </div>
   )

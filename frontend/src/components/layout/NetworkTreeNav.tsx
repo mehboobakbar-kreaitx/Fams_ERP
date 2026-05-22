@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { axiosClient } from '../../api/axiosClient'
 import { cn } from '../../lib/utils'
@@ -24,13 +25,13 @@ type CampusItem = {
 type Props = { theme: PortalTheme }
 
 export function NetworkTreeNav({ theme }: Props) {
+  const navigate = useNavigate()
   const {
     scopeType,
     selectedSchoolId,
     selectedCampusId,
     selectNetwork,
     selectSchool,
-    enterCampus,
   } = useNavScope()
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -171,7 +172,7 @@ export function NetworkTreeNav({ theme }: Props) {
                   return (
                     <button
                       key={campus.id}
-                      onClick={() => enterCampus(campus.id, campus.name, school.id, school.name)}
+                      onClick={() => navigate(`/super-admin/workspace/campus/${campus.id}`)}
                       className={cn(
                         'group w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors text-left',
                         isCampusActive
