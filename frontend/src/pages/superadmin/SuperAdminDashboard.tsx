@@ -4,6 +4,7 @@ import KpiCard from '../../components/ui/KpiCard'
 import DataTable, { type Column } from '../../components/ui/DataTable'
 import { formatCurrency } from '../../lib/utils'
 import { useNavScope } from '../../store/navScopeStore'
+import NetworkDashboard from './NetworkDashboard'
 
 type CampusKpi = {
   campusId: string
@@ -91,6 +92,11 @@ export default function SuperAdminDashboard() {
     enabled: scopeType === 'school',
   })
 
+  // All hooks are declared above — safe to short-circuit render here.
+  // React Query deduplicates the shared 'dashboard-executive' key so no
+  // extra network request is made when NetworkDashboard also subscribes.
+  if (scopeType === 'network') return <NetworkDashboard />
+
   if (dashQuery.isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -163,11 +169,6 @@ export default function SuperAdminDashboard() {
           label="Outstanding Fees"
           value={formatCurrency(totalOutstanding)}
           trend={totalOutstanding > 0 ? 'down' : 'up'}
-          hint={
-            scopeType === 'network'
-              ? `${all.totalApplicationsThisMonth ?? 0} new applications this month`
-              : undefined
-          }
           icon="⏳"
         />
       </div>

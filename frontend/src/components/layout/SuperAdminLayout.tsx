@@ -28,8 +28,9 @@ const networkNavItems: PortalNavItem[] = [
     icon: '🏛️',
     defaultOpen: true,
     children: [
-      { to: '/super-admin/schools',  label: 'Schools',  icon: '🏛️' },
-      { to: '/super-admin/campuses', label: 'Campuses', icon: '🏫' },
+      { to: '/super-admin/schools',        label: 'Schools',       icon: '🏛️' },
+      { to: '/super-admin/campuses',       label: 'Campuses',      icon: '🏫' },
+      { to: '/super-admin/subscriptions',  label: 'Subscriptions', icon: '💳' },
     ],
   },
 
@@ -37,8 +38,8 @@ const networkNavItems: PortalNavItem[] = [
     label: 'Platform Finance',
     icon: '💳',
     children: [
-      { to: '/super-admin/subscriptions', label: 'Subscriptions & Billing', icon: '💳' },
-      { to: '/super-admin/finance/reports', label: 'Revenue Reports',        icon: '📊' },
+      { to: '/super-admin/subscriptions',   label: 'Billing',  icon: '💳' },
+      { to: '/super-admin/finance/reports', label: 'Revenue',  icon: '📊' },
     ],
   },
 
@@ -46,12 +47,11 @@ const networkNavItems: PortalNavItem[] = [
     label: 'Network Analytics',
     icon: '📊',
     children: [
-      { to: '/super-admin/reports',              label: 'Analytics Hub',        icon: '📊' },
-      { to: '/super-admin/reports/cross-campus', label: 'Cross-Campus',         icon: '🌐' },
-      { to: '/super-admin/reports/campus-kpi',   label: 'Campus KPIs',          icon: '🏆' },
-      { to: '/super-admin/reports/academic',     label: 'Academic Overview',    icon: '📚' },
-      { to: '/super-admin/reports/attendance',   label: 'Attendance Overview',  icon: '📅' },
-      { to: '/super-admin/reports/operational',  label: 'Operational Overview', icon: '⚙️' },
+      { to: '/super-admin/reports',              label: 'Analytics Hub',    icon: '📊' },
+      { to: '/super-admin/reports/cross-campus', label: 'Cross-School KPIs', icon: '🌐' },
+      { to: '/super-admin/reports/attendance',   label: 'Enrollment Trends', icon: '📈' },
+      { to: '/super-admin/reports/campus-kpi',   label: 'Revenue Trends',    icon: '💹' },
+      { to: '/super-admin/security/compliance',  label: 'Compliance Metrics', icon: '📋' },
     ],
   },
 
@@ -73,20 +73,70 @@ const networkNavItems: PortalNavItem[] = [
 
 // ── School workspace nav ──────────────────────────────────────────────────────
 // Shown in 'school' scope — after a school is selected in the tree.
-// School-scoped analytics and campus list only. NO campus-operational modules.
+// Full operational modules are available here, scoped to the selected school.
 const schoolNavItems: PortalNavItem[] = [
   { to: '/super-admin/dashboard', label: 'School Overview', icon: '🏛️' },
   { to: '/super-admin/campuses',  label: 'Campuses',        icon: '🏫' },
+  { to: '/super-admin/students',  label: 'Students',        icon: '👥' },
 
   {
-    label: 'School Analytics',
-    icon: '📊',
-    defaultOpen: true,
+    label: 'Academic',
+    icon: '📚',
     children: [
-      { to: '/super-admin/reports/campus-kpi',  label: 'Campus KPIs',          icon: '🏆' },
-      { to: '/super-admin/reports/academic',    label: 'Academic Overview',    icon: '📚' },
-      { to: '/super-admin/reports/attendance',  label: 'Attendance Overview',  icon: '📅' },
-      { to: '/super-admin/reports/operational', label: 'Operational Overview', icon: '⚙️' },
+      { to: '/super-admin/reports/academic',    label: 'Academic Overview',   icon: '📚' },
+      { to: '/super-admin/reports/attendance',  label: 'Attendance Overview', icon: '📅' },
+      { to: '/super-admin/classes',             label: 'Classes',             icon: '🎓' },
+      { to: '/super-admin/exams',               label: 'Examinations',        icon: '📝' },
+    ],
+  },
+
+  { to: '/super-admin/staff', label: 'HRM', icon: '🧑‍💼' },
+
+  {
+    label: 'Finance',
+    icon: '💼',
+    children: [
+      { to: '/super-admin/finance',         label: 'Finance Dashboard', icon: '💼' },
+      { to: '/super-admin/finance/reports', label: 'Reports',           icon: '📊' },
+    ],
+  },
+
+  { to: '/super-admin/payroll', label: 'Payroll', icon: '💵' },
+
+  {
+    label: 'Procurement',
+    icon: '🛒',
+    children: [
+      { to: '/super-admin/procurement',          label: 'Dashboard', icon: '🛒' },
+      { to: '/super-admin/procurement/vendors',  label: 'Vendors',   icon: '🏢' },
+      { to: '/super-admin/procurement/requests', label: 'Requests',  icon: '📋' },
+      { to: '/super-admin/procurement/orders',   label: 'Orders',    icon: '📦' },
+      { to: '/super-admin/procurement/reports',  label: 'Reports',   icon: '📊' },
+    ],
+  },
+
+  {
+    label: 'Assets',
+    icon: '🏗️',
+    children: [
+      { to: '/super-admin/assets',           label: 'Dashboard', icon: '🏗️' },
+      { to: '/super-admin/assets/registry',  label: 'Registry',  icon: '📋' },
+      { to: '/super-admin/assets/inventory', label: 'Inventory', icon: '📦' },
+      { to: '/super-admin/assets/transfers', label: 'Transfers', icon: '🔄' },
+      { to: '/super-admin/assets/audit',     label: 'Audit',     icon: '🔍' },
+    ],
+  },
+
+  { to: '/super-admin/transport', label: 'Transport', icon: '🚌' },
+  { to: '/super-admin/library',   label: 'Library',   icon: '📚' },
+  { to: '/super-admin/hostel',    label: 'Hostel',    icon: '🏠' },
+
+  {
+    label: 'Reports',
+    icon: '📊',
+    children: [
+      { to: '/super-admin/reports',              label: 'Reports Hub',          icon: '📊' },
+      { to: '/super-admin/reports/operational',  label: 'Operational Overview', icon: '⚙️' },
     ],
   },
 
@@ -94,7 +144,7 @@ const schoolNavItems: PortalNavItem[] = [
     label: 'Compliance',
     icon: '🛡️',
     children: [
-      { to: '/super-admin/audit',             label: 'Audit Logs',      icon: '🔒' },
+      { to: '/super-admin/audit',             label: 'Audit Logs',       icon: '🔒' },
       { to: '/super-admin/security/activity', label: 'Activity Monitor', icon: '👁️' },
     ],
   },
